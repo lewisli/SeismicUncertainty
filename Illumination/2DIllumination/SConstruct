@@ -1,0 +1,70 @@
+## 
+# SEAM 2D illumination
+##
+try:    from rsf.cluster import *
+except: from rsf.proj    import *
+import rsf.recipes.wplot as wplot
+import rsf.recipes.encode as encode
+import rsf.recipes.wei as wei
+
+Cluster(name='2DSEAMIllumination',email='lewisli@stanford.edu', time=1, ppn=1, nodetype='', scheduler='pbs')
+
+par = dict(
+     nx=875,  ox=0, dx=0.04, lx='x', ux='km',
+     ny=1,    oy=0, dy=0.04, ly='y', uy='km',
+     nz=750,  oz=0, dz=0.02, lz='z', uz='km',
+     nt=6000, ot=0, dt=0.001,lt='t', ut='s'
+     )
+wplot.param(par)      # prepare plots
+
+# WEI params
+par['jw']=1
+par['ow']=3
+par['nw']=24
+par['nrmax']=5
+        
+# ------------------------------------------------------------
+# velocity
+strvelfile = '/data/cees/lewisli/SEAM/Vp_xyz_10m.hh'
+Flow('velo',None,
+     '''
+     window squeeze=n <%s n1=%d j1=4 n2=1 f2=2000 n3=%d j3=2 |
+     scale rscale=0.001 |
+     put 
+     o1=%g d1=%g label1=%s unit1=%s
+     o2=%g d2=%g label2=%s unit2=%s
+     o3=%g d3=%g label3=%s unit3=%s
+     '''%(strvelfile,
+          par['nx'],par['nz'],
+          par['ox'],par['dx'],par['lx'],par['ux'],
+          par['oy'],par['dy'],par['ly'],par['uy'],
+          par['oz'],par['dz'],par['lz'],par['uz']
+          ))
+Result('velo',
+       'window | transp |'
+       + wplot.igrey2d('color=j mean=y',par))
+
+# slowness
+Flow('slow','velo','math output="1/input"')
+
+# data - a plane wave
+Flow('tdat',None,
+     '''
+     spike nsp=1 mag=1
+     n1=%(nt)d o1=%(ot)g d1=%(dt)g k1=1 l1=1
+     n2=%(nx)d o2=%(ox)g d2=%(dx)g |
+     put label1=%(lt)s unit1=%(ut)s label2=%(lx)s unit2=%(ux)s
+     '''%par)
+encode.time2freq('tdat','wdat',par)
+
+# wavefield
+wei.wfl('wfld','wdat','slow','',par)
+
+# illumination
+Flow('ilum','wfld','cabs | stack axis=4 | transp plane=23 | transp plane=12')
+Result('ilum',wplot.igrey2d('color=j mean=y pclip=99.9',par))
+
+Flow('ionv',['velo','ilum'],'window | transp | add scale=1,3 ${SOURCES[1]}')
+Result('ionv',wplot.igrey2d('mean=y pclip=99.9',par))
+
+End()
