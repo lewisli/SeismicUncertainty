@@ -1,4 +1,8 @@
 # for projects that use SCons for building: http://http://www.scons.org/
-.sconsign.dblite
+*.sconsign.dblite
+*.sconsign.dbhash
 *.vpl
 *.rsf
+pbs/
+Fig/
+HISTORY.txt
