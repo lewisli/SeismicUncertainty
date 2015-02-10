@@ -1,13 +1,15 @@
 try:    from rsf.cluster import *
 except: from rsf.proj    import *
-import fdmod,encode,wei
+import rsf.recipes.fdmod as fdmod
+import rsf.recipes.encode as encode
+import rsf.recipes.wei as wei
 import math
 
 # ------------------------------------------------------------
-Cluster(name='sbig357',email='lewisli@stanford.edu',time=50,ppn=4,nodetype='Q26a',scheduler='pbs')
+Cluster(name='sbig357',email='lewisli@stanford.edu',time=50,ppn=8,nodetype='Q26a',scheduler='pbs')
 # ------------------------------------------------------------
 nodes=8
-ipern=2
+ipern=8
 
 par = dict( nt=2000,   ot=0, dt=0.008, lt='t',   ut='s',
             nx=1167,   ox=0, dx=0.03,  lx='x',   ux='km',
