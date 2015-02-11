@@ -7,7 +7,7 @@ import rsf.recipes.wplot as wplot
 import rsf.recipes.encode as encode
 import rsf.recipes.wei as wei
 
-Cluster(name='3DSEAMIll',email='lewisli@stanford.edu', time=2, ppn=1, nodetype='default', scheduler='pbs')
+Cluster(name='3DSEAMIll',email='lewisli@stanford.edu', time=5, ppn=1, nodetype='Q26a', scheduler='pbs')
 
 
 par = dict(
@@ -26,7 +26,7 @@ par['nrmax']=5
         
 # ------------------------------------------------------------
 # velocity
-strvelfile = '/data/cees/lewisli/SEAM/Vp_xyz_10m.hh'
+strvelfile = '/data/groups/scrf/data/seam/Vp_xyz_10m.hh'
 Flow('velo',None,
      '''
      window squeeze=n <%s n1=%d j1=4 n2=%d j2=4 n3=%d j3=2 |

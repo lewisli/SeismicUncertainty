@@ -25,7 +25,7 @@ par['nrmax']=5
         
 # ------------------------------------------------------------
 # velocity
-strvelfile = '/data/cees/lewisli/SEAM/Vp_xyz_10m.hh'
+strvelfile = '/data/groups/scrf/data/Vp_xyz_10m.hh'
 Flow('velo',None,
      '''
      window squeeze=n <%s n1=%d j1=4 n2=1 f2=2000 n3=%d j3=2 |
