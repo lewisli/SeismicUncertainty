@@ -1,4 +1,5 @@
-function [ Output ] = DownsampleSeismicCube( file_path, OrigSize, NewSize )
+function [ Output, OutputSpacing ] = DownsampleSeismicCube( file_path, ...
+    InputSize, InputSpacing, OutputSize, PermutateOrder)
 %DownsampleSeismicCube Downsample seismic cube
 %   Detailed explanation goes here
 
@@ -7,23 +8,23 @@ fid = fopen(file_path, 'r');
 fseek(fid, 0,'bof');
 
 num_bytes_in_single = 4;
-slice_size = OrigSize(1)*OrigSize(2)*num_bytes_in_single;
-ScaleFactor = OrigSize./NewSize;
+slice_size = InputSize(1)*InputSize(2)*num_bytes_in_single;
+ScaleFactor = InputSize./OutputSize;
 h = waitbar(0,'Initializing waitbar...');
 
-Output = zeros(NewSize);
-for i = 1:NewSize(3)
-    waitbar(i/NewSize(3),h,sprintf('%2d%%',round(i/NewSize(3)*100)));
+Output = zeros(OutputSize);
+for i = 1:OutputSize(3)
+    waitbar(i/OutputSize(3),h,sprintf('%2d%%',round(i/OutputSize(3)*100)));
     SeekLayer = i*ScaleFactor(3)-1;
     Lower = floor(SeekLayer);
     Upper = ceil(SeekLayer);
     fseek(fid,slice_size*Lower,'bof');
-    sampleA = fread(fid, [OrigSize(1) OrigSize(2)],'single');
-    sampleA = imresize(sampleA,[NewSize(1) NewSize(2)]);
+    sampleA = fread(fid, [InputSize(1) InputSize(2)],'single');
+    sampleA = imresize(sampleA,[OutputSize(1) OutputSize(2)]);
     
     fseek(fid,slice_size*Upper,'bof');
-    sampleB = fread(fid, [OrigSize(1) OrigSize(2)],'single');
-    sampleB = imresize(sampleB,[NewSize(1) NewSize(2)]);
+    sampleB = fread(fid, [InputSize(1) InputSize(2)],'single');
+    sampleB = imresize(sampleB,[OutputSize(1) OutputSize(2)]);
     
     if (Lower ~=Upper)  
         Output(:,:,i) = (1-(SeekLayer-Lower))*sampleA+...
@@ -33,6 +34,14 @@ for i = 1:NewSize(3)
     end
 end
 close(h);
+
+% Compute new spacing
+OutputSpacing = InputSpacing.*ScaleFactor;
+
+% Permutate if necessary
+if (nargin == 5)
+    Output = permute(Output,PermutateOrder);
+end
 
 end
 

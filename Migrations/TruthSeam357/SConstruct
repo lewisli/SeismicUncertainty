@@ -314,8 +314,7 @@ for k in range(klist):
     # SEGY to RSF (input is IEEE format)
     # ------------------------------------------------------------
     Flow(['data'+ktag,'head'+ktag],None,
-         'segyread tape=/data/groups/scrf/data/seam/SHOTS/SOURCE_0%d.sgy 
-format=5 tfile=${TARGETS[1]}|'%nlist[k] +
+         'segyread tape=/data/groups/scrf/data/seam/SHOTS/SOURCE_0%d.sgy format=5 tfile=${TARGETS[1]}|'%nlist[k] +
          '''
          put                              label1=%(lt)s  unit1=%(ut)s
          n2=%(nry)d o2=%(ory)g d2=%(dry)g label2=%(lry)s unit2=%(ury)s

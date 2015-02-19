@@ -7,8 +7,9 @@ import rsf.recipes.wplot as wplot
 import rsf.recipes.encode as encode
 import rsf.recipes.wei as wei
 
-Cluster(name='3DSEAMIll',email='lewisli@stanford.edu', time=5, ppn=1, nodetype='Q26a', scheduler='pbs')
+Cluster(name='SeamIllumination',email='lewisli@stanford.edu', time=5, ppn=8, nodetype='Q26a', scheduler='pbs')
 
+nodes=8
 
 par = dict(
      nx=875,  ox=0, dx=0.04, lx='x', ux='km',
@@ -66,10 +67,15 @@ encode.time2freq('tdat','wdat',par)
 wei.wfl('wfld','wdat','slow','',par)
 
 # illumination
+Fork(time=20,ipn=int(range(par['nw'])/nodes),nodes=nodes)
 for iw in range(par['nw']):
      wtag = "%02d"%iw
      Flow('ilum'+wtag,'wfld',
           'window n4=1 f4=%d | cabs | transp plane=23 | transp plane=12'%iw)
+     Iterate()
+Join()
+
+
 Flow('ilum',['ilum%02d'%iw for iw in range(par['nw'])],
      'add ${SOURCES[1:%(nw)d]}'%par)
 Flow('ibyt','ilum',
