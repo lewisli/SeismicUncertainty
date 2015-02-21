@@ -1,4 +1,4 @@
-function [ success ] = MatrixToSumoResource(Name, Mat, Dim, Spacing, NumComponents)
+function [ success ] = MatrixToSumoResource(OutputDir, Name, Mat, Dim, Spacing, NumComponents)
 %MatrixToSumoResource Converts matlab matrix to sumo format
 %   Given a matrix, writes the appropiate XML formatted header file and
 %   corresponding binary file that makes up a SumoResource file.
@@ -38,7 +38,7 @@ num_components_node.setAttribute('Num', num2str(NumComponents));
 entry_node.appendChild(num_components_node);
 
 % Binary file path
-absPath=[pwd '/' Name '.bin'];
+absPath=[OutputDir '/' Name '.bin'];
 filepath_node = docNode.createElement('Binary_path');
 filepath_node.setAttribute('Path', absPath);
 entry_node.appendChild(filepath_node);
@@ -47,7 +47,7 @@ fid = fopen(absPath,'w');
 fwrite(fid,Mat,'float32');
 fclose(fid);
 
-xmlFileName = [Name,'.smh'];
+xmlFileName = [OutputDir '/' Name,'.smh'];
 xmlwrite(xmlFileName,docNode);
 
 success = true;

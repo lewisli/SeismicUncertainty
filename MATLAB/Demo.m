@@ -1,3 +1,7 @@
+%% All data is stored under $SYNCDATAPATH, which will be synced using 
+% Bitorrent Sync
+DataPath = getenv('SYNCDATAPATH');
+
 %% Demo for downsampling Seismic Cube
 file_path = '/Volumes/Communal/Data/Seismic/Velocity/Truth/Vp_xyz_10m.bin';
 OriginalSize = [3501 4001 1501];
@@ -18,9 +22,23 @@ close all;
 [Output, OutputSpacing] = DownsampleSeismicCube(file_path,OriginalSize,...
     OriginalSpacing, NewSize);
 MatrixToSumoResource('Illumination',Output,NewSize,OutputSpacing, 1);
+
+
+%% Load Best Guess Reference
+file_path = [DataPath '/Seismic/Sumo/BestGuessLowRes.smh@'];
+OriginalSize = [176 201 76];
+NewSize = [176 201 76];
+OriginalSpacing = [1 1 1];
+[BestGuessLowRes, OutputSpacing] = DownsampleSeismicCube(file_path,OriginalSize,...
+    OriginalSpacing, NewSize,4);
+
 %%
-
-
+file_path = [DataPath '/Seismic/Sumo/TruthLowRes.smh@'];
+OriginalSize = [176 201 76];
+NewSize = [176 201 76];
+OriginalSpacing = [1 1 1];
+[TruthLowRes, OutputSpacing] = DownsampleSeismicCube(file_path,OriginalSize,...
+    OriginalSpacing, NewSize, 8);
 
 % path = '/Volumes/Communal/Data/Seismic/Images/seamTruth357/cstk.rsf@';
 % originalSize = [584 667 600];

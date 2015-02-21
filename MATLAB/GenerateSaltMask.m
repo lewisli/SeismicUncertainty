@@ -3,8 +3,8 @@ function [ SaltMask ] = GenerateSaltMask( CurrentDepthSlice, SaltVelocity,...
 %GenerateSaltMask Summary of this function goes here
 %   Detailed explanation goes here
 
-threshold_lower = SaltVelocity - 50;
-threshold_upper = SaltVelocity + 50;
+threshold_lower = SaltVelocity - 1;
+threshold_upper = SaltVelocity + 1;
 lower_spatial_bound = 1152;
 
 % Threshold image

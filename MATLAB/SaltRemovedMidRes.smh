@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SumoResource>
+   <SaltRemovedMidRes>
+      <ResourceType Type="UniformGrid"/>
+      <DataType Type="Float"/>
+      <Grid_Dimension x="350" y="400" z="150"/>
+      <Grid_Spacing x="10.0029" y="10.0025" z="10.0067"/>
+      <Num_Components Num="1"/>
+      <Binary_path Path="/home/lewisli/code-dev/madagascar/MATLAB/SaltRemovedMidRes.bin"/>
+   </SaltRemovedMidRes>
+</SumoResource>
