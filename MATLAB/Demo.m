@@ -33,16 +33,31 @@ OriginalSpacing = [1 1 1];
     OriginalSpacing, NewSize,4);
 
 %%
-file_path = [DataPath '/Seismic/Sumo/TruthLowRes.smh@'];
-OriginalSize = [176 201 76];
+file_path = [DataPath '/Seismic/Velocity/SEAM/3D/BestGuessMidResTrilinear.hh@'];
+OriginalSize = [1167 1334 1501];
 NewSize = [176 201 76];
 OriginalSpacing = [1 1 1];
-[TruthLowRes, OutputSpacing] = DownsampleSeismicCube(file_path,OriginalSize,...
-    OriginalSpacing, NewSize, 8);
+[BestGuessMidResTrilinear, OutputSpacing] = DownsampleSeismicCube(file_path,OriginalSize,...
+    OriginalSpacing, NewSize, 4);
+%%
+file_path = [DataPath '/Seismic/Velocity/Truth/vp.hh@'];
+OriginalSize = [1167 1334 1501];
+NewSize = [176 201 76];
+OriginalSpacing = [1 1 1];
+[Truth, OutputSpacing] = DownsampleSeismicCube(file_path,OriginalSize,...
+    OriginalSpacing, NewSize, 4);
 
 % path = '/Volumes/Communal/Data/Seismic/Images/seamTruth357/cstk.rsf@';
 % originalSize = [584 667 600];
 % newSize = [584,667,76];
+
+%%
+for i = 1:size(TruthLowRes,3)
+   imagesc(TruthLowRes(:,:,i));
+   colorbar;
+   title([num2str(i)]);
+   pause(0.25);
+end
 
 
 

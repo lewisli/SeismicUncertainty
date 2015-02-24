@@ -5,9 +5,10 @@ import rsf.recipes.encode as encode
 import rsf.recipes.wei as wei
 import math
 
+
 # ------------------------------------------------------------
-Cluster(name='seam357Truth',email='lewisli@stanford.edu.edu',time=100,ppn=6,
-nodetype = 'Q26a' )
+#Cluster(name='seam357Truth',email='lewisli@stanford.edu.edu',time=100,ppn=6,
+#nodetype = 'Q26a' )
 # ------------------------------------------------------------
 nodes=8
 
@@ -81,7 +82,7 @@ def greyyx(custom,par):
 def graphyx(custom,par):
     return '''
     dd type=complex |
-    graph title="" labelrot=n wantaxis=n yreverse=n
+    graph title="" labelrot=n wantaxis=y yreverse=n
     min2=%g max2=%g label2="\F2 %s\F3" unit2=%s
     min1=%g max1=%g label1="\F2 %s\F3" unit1=%s
     screenratio=%g screenht=10
@@ -215,8 +216,7 @@ izcip=(par['zcip']-parmig['oz'])/(parmig['dz'])
 
 # ------------------------------------------------------------
 # velocity
-velo="/run/media/lewisli/SeagateData/data/seam/Velocity/vp.hh"
-
+velo=os.getenv('SYNCDATAPATH') + "/Seismic/Velocity/Truth/vp.hh"
 Flow('velo',None,
      'window j1=2 j2=2 j3=%d <%s'%(par['jz'],velo))
 
@@ -263,7 +263,7 @@ Flow('slod',None,
 
 # ------------------------------------------------------------
 # wavelet
-wavelet="/run/media/lewisli/SeagateData/data/seam/Wavelets/SEAM_wavelet-g_8ms.sgy"
+wavelet=os.getenv('SYNCDATAPATH') + "/Seismic/Wavelets/SEAM_wavelet-g_8ms.sgy"
 
 Flow(  'wavelet',wavelet,'segyread tape=$SOURCE tfile=/dev/null format=5')
 Result('wavelet','window n1=100 | graph title="" pclip=100 grid=y')
@@ -316,7 +316,7 @@ for k in range(klist):
     # SEGY to RSF (input is IEEE format)
     # ------------------------------------------------------------
     Flow(['data'+ktag,'head'+ktag],None,
-         'segyread tape=/run/media/lewisli/SeagateData/data/seam/SHOTS/SOURCE_0%d.sgy format=5 tfile=${TARGETS[1]}|'%nlist[k] +
+         'segyread tape=' + os.getenv('SYNCDATAPATH') + '/Seismic/SHOTS/SOURCE_0%d.sgy format=5 tfile=${TARGETS[1]}|'%nlist[k] +
          '''
          put                              label1=%(lt)s  unit1=%(ut)s
          n2=%(nry)d o2=%(ory)g d2=%(dry)g label2=%(lry)s unit2=%(ury)s
