@@ -363,55 +363,72 @@ for k in range(klist):
 
     # ------------------------------------------------------------
     # migration
-    wei.cigmigsplit('cic'+ktag,'dfs'+ktag,'dfr'+ktag,'slow','',par)
-    
-    # remap image on the slowness grid
-    Flow('cwn'+ktag,
-         ['cic'+ktag,'sxy','syx'],
-         '''
-         remap1 pattern=${SOURCES[1]} order=1 |
-         transp |
-         remap1 pattern=${SOURCES[2]} order=1 |
-         transp
-         ''')
+    # split here agian
+    par['cigsplit'] = 2
+    par['tag']=ktag;
+    for i in range(par['cigsplit']):
+        stag = '-%02d' % (i)
+        wei.cigmigsplit('cic'+ktag+stag,'dfs'+ktag,'dfr'+ktag,'slow',i,'',par)
+
+# We need to break the loop here, add the results of cigmigsplit before continuining
+for k in range(klist):
+    ktag = '-%06d' % nlist[k]
+
+    Flow('cic'+ktag, ['cic'+ktag+'-%02d'%s for s in range(par['cigsplit'])], 
+        '''
+        add scale=1,1
+        ${SOURCES[1:-1]}
+        '''
+        )
+
+
+    # # remap image on the slowness grid
+    # Flow('cwn'+ktag,
+    #      ['cic'+ktag,'sxy','syx'],
+    #      '''
+    #      remap1 pattern=${SOURCES[1]} order=1 |
+    #      transp |
+    #      remap1 pattern=${SOURCES[2]} order=1 |
+    #      transp
+    #      ''')
  
-    Result('ccut'+ktag,'cwn'+ktag,
-            'window n2=1 min2=%(ycip)g | transp |'%par
-            +fdmod.cgrey('pclip=99.9'+section,par))
+    # Result('ccut'+ktag,'cwn'+ktag,
+    #         'window n2=1 min2=%(ycip)g | transp |'%par
+    #         +fdmod.cgrey('pclip=99.9'+section,par))
 
 #    Iterate()
 #Join()
 
 # ------------------------------------------------------------
 # CIC stack
-Flow('cstk',['cwn-%06d'%nlist[k] for k in range(klist)],
-     '''
-     cat axis=4 space=n ${SOURCES[1:%d]} |
-     transp plane=34 | transp plane=23 |
-     stack 
-     '''%len(range(klist)))
-Result('cstk','transp plane=23 | transp plane=12 | tpow tpow=2 |'
-       +fdmod.ccut3d('|',parmig)
-       +'byte gainpanel=a pclip=99.0 |'
-       +fdmod.cgrey3d('frame1=%d frame2=%d frame3=%d'%(izcip,ixcip,iycip)+par['labelrot0'],parmig))
+# Flow('cstk',['cwn-%06d'%nlist[k] for k in range(klist)],
+#      '''
+#      cat axis=4 space=n ${SOURCES[1:%d]} |
+#      transp plane=34 | transp plane=23 |
+#      stack 
+#      '''%len(range(klist)))
+# Result('cstk','transp plane=23 | transp plane=12 | tpow tpow=2 |'
+#        +fdmod.ccut3d('|',parmig)
+#        +'byte gainpanel=a pclip=99.0 |'
+#        +fdmod.cgrey3d('frame1=%d frame2=%d frame3=%d'%(izcip,ixcip,iycip)+par['labelrot0'],parmig))
 
-Result('ccut','cstk',
-        'window n2=1 min2=%(ycip)g | transp |'%par
-        +fdmod.cgrey('pclip=99.0'+section,par))
+# Result('ccut','cstk',
+#         'window n2=1 min2=%(ycip)g | transp |'%par
+#         +fdmod.cgrey('pclip=99.0'+section,par))
 
-# ------------------------------------------------------------
-Flow('cwn-byt',['cwn-%06d' % nlist[k] for k in range(klist)],
-     'cat axis=4 space=n ${SOURCES[1:%d]} | byte gainpanel=a pclip=99.0'%klist)
+# # ------------------------------------------------------------
+# Flow('cwn-byt',['cwn-%06d' % nlist[k] for k in range(klist)],
+#      'cat axis=4 space=n ${SOURCES[1:%d]} | byte gainpanel=a pclip=99.0'%klist)
 
-for k in range(klist):
-    ktag = '-%06d' % nlist[k]
+# for k in range(klist):
+#     ktag = '-%06d' % nlist[k]
 
-    # CIC
-    Result('cwn'+ktag,
-	   'cwn-byt',
-	   'window n4=1 f4=%d | transp plane=23 | transp plane=12 |'%k +
-	   fdmod.ccut3d('|',parmig) +
-           fdmod.cgrey3d('frame1=%d frame2=%d frame3=%d'%(izcip,ixcip,iycip)+par['labelrot0'],parmig))
+#     # CIC
+#     Result('cwn'+ktag,
+# 	   'cwn-byt',
+# 	   'window n4=1 f4=%d | transp plane=23 | transp plane=12 |'%k +
+# 	   fdmod.ccut3d('|',parmig) +
+#            fdmod.cgrey3d('frame1=%d frame2=%d frame3=%d'%(izcip,ixcip,iycip)+par['labelrot0'],parmig))
 
 # ------------------------------------------------------------
 # ------------------------------------------------------------
