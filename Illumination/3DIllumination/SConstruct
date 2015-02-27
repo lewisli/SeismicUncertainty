@@ -1,4 +1,4 @@
-## 
+# 
 # SEAM 3D illumination
 ##
 try:    from rsf.cluster import *
