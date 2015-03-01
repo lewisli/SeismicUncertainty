@@ -315,15 +315,6 @@ for isx in range(par['mignsx']):
         ylist.append(y);
 
 # ------------------------------------------------------------
-# print shot names in file
-f = open('shots.txt', 'w')
-klist=len(nlist);
-for k in range(klist):
-    print "shot #",nlist[k]," @ {x,y}={",xlist[k],",",ylist[k],"}"
-    f.write("SOURCE_0%d.sgy\n"%nlist[k])
-f.close()
-    
-# ------------------------------------------------------------
 for k in range(klist):
     ktag = '-%06d' % nlist[k]
 
