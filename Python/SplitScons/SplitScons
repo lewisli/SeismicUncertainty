@@ -315,6 +315,7 @@ for isx in range(par['mignsx']):
         ylist.append(y);
 
 # ------------------------------------------------------------
+klist=len(nlist);
 for k in range(klist):
     ktag = '-%06d' % nlist[k]
 
@@ -694,12 +695,12 @@ def main(argv=None):
 
 
     # Name of Job
-    par['jobname'] = 'SampleTest'
+    par['jobname'] = VelocityModelName
     par['cigsplit'] = 4
     par['TestNum'] = 2
 
     # Prepare velocity model
-    Job1(par,1,0.5,'BestGuessMidResTrilinear.hh')
+    Job1(par,1,0.5,VelocityModelName)
 
     # Prepare data
     Job2(par,8,0.5)
