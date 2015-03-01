@@ -1,4 +1,4 @@
-%% All data is stored under $SYNCDATAPATH, which will be synced using 
+%% All data is stored under $SYNCDATAPATH, which will be synced using
 % Bitorrent Sync
 DataPath = getenv('SYNCDATAPATH');
 
@@ -53,22 +53,83 @@ OriginalSpacing = [1 1 1];
 
 %%
 for i = 1:size(TruthLowRes,3)
-   imagesc(TruthLowRes(:,:,i));
-   colorbar;
-   title([num2str(i)]);
-   pause(0.25);
+    imagesc(TruthLowRes(:,:,i));
+    colorbar;
+    title([num2str(i)]);
+    pause(0.25);
 end
 
 
+%%
+path = '/Volumes/Communal/SplitMigTest/cic-028905_0.rsf@';
+OriginalSize = [800 800 600];
+cic_0 = ReadSeismicCube(path,OriginalSize,4);
+
+path = '/Volumes/Communal/SplitMigTest/cic-028905_1.rsf@';
+OriginalSize = [800 800 600];
+cic_1 = ReadSeismicCube(path,OriginalSize,4);
+
+path = '/Volumes/Communal/SplitMigTest/cic-028905_2.rsf@';
+OriginalSize = [800 800 600];
+cic_2 = ReadSeismicCube(path,OriginalSize,4);
+
+path = '/Volumes/Communal/SplitMigTest/cic-028905_3.rsf@';
+OriginalSize = [800 800 600];
+cic_3 = ReadSeismicCube(path,OriginalSize,4);
 
 %%
-% for i = 1:newSize(3)
-%    imagesc(Output(:,:,i),[-5 5]);
-%    colormap gray;
-%    colorbar;
-%    title(num2str(i));
-%    waitforbuttonpress;
-% end
+path = '/Volumes/Communal/SplitMigTest/cic-028905.rsf@';
+OriginalSize = [800 800 600];
+cic_stk = ReadSeismicCube(path,OriginalSize,4);
+%%
+path = '/Volumes/Communal/BestGuessTest/cic-028905.rsf@'
+OriginalSize = [800 800 600];
+cic_best_guess = ReadSeismicCube(path,OriginalSize,4);
 
-%% DetectSalt
-OutputImage = DetectSalt(Output,[20 20 20], 4480);
+%%
+path = '/Volumes/Communal/SplitMigTest/cwn-028905.rsf@';
+OriginalSize = [584 667 600];
+cwn_split = ReadSeismicCube(path,OriginalSize,4);
+
+%%
+path = '/Volumes/Communal/BestGuessTest/cwn-028905.rsf@';
+OriginalSize = [584 667 600];
+cwn_best_guess = ReadSeismicCube(path,OriginalSize,4);
+
+%%
+for i = 1:600
+    subplot(3,1,1)
+    imagesc(cwn_split(:,:,i));
+    colormap gray;
+    colorbar;
+    subplot(3,1,2)
+    imagesc(cwn_best_guess(:,:,i));
+    colormap gray;
+    colorbar;
+    subplot(3,1,3)
+    imagesc(cwn_split(:,:,i) -cwn_best_guess(:,:,i));
+    colormap gray;
+    colorbar;
+    
+    title(num2str(i))
+    pause(0.25);
+end
+%%
+for i = 1:600
+    cstk = cic_0(:,:,i)+cic_1(:,:,i)+cic_2(:,:,i)+cic_3(:,:,i);
+    subplot(3,1,1)
+    imagesc(cstk,[-150 150]);
+    colormap gray;
+    colorbar;
+    subplot(3,1,2)
+    imagesc(cic_best_guess(:,:,i),[-150 150]);
+    colormap gray;
+    colorbar;
+    subplot(3,1,3)
+    imagesc(cic_stk(:,:,i),[-150 150]);
+    colormap gray;
+    colorbar;
+    
+    title(num2str(i))
+    pause(0.25);
+end
