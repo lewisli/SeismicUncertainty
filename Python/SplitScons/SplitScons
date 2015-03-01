@@ -321,20 +321,20 @@ for k in range(klist):
 
     # shot position
     fdmod.point('ss'+ktag,xlist[k],ylist[k],par)
-    Plot('ss'+ktag,graphyx('plotfat=10 symbol=. plotcol=6',par))
+    #Plot('ss'+ktag,graphyx('plotfat=10 symbol=. plotcol=6',par))
 
     # receiver positions
     fdmod.boxarray('rr'+ktag,
                par['nry'],ylist[k]-(par['nry']-1)/2*par['dry'],par['dry'],
                par['nrx'],xlist[k]-(par['nrx']-1)/2*par['drx'],par['drx'],par)
-    Plot('rr'+ktag,'put n2=%(nry)d n3=%(nrx)d | window j2=30 j3=5 |'%par+
-         graphyx('plotfat=2 symbol=. plotcol=2',par))
+    #Plot('rr'+ktag,'put n2=%(nry)d n3=%(nrx)d | window j2=30 j3=5 |'%par+
+    #     graphyx('plotfat=2 symbol=. plotcol=2',par))
 
     fdmod.boxarray('mm'+ktag,
                    par['nmy'],ylist[k]-par['hmy']*par['dry']*par['jy'],par['dry']*par['jy'],
                    par['nmx'],xlist[k]-par['hmx']*par['drx']*par['jx'],par['drx']*par['jx'],par)
-    Plot('mm'+ktag,'window j2=71 |'+
-         graphyx('plotfat=2 symbol=. plotcol=1',par))
+    #Plot('mm'+ktag,'window j2=71 |'+
+    #     graphyx('plotfat=2 symbol=. plotcol=1',par))
 
 Plot('ss',['ss-%06d'%nlist[k] for k in range(klist)],'Overlay')
 

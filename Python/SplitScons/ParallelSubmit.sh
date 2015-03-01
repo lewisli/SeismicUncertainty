@@ -7,7 +7,7 @@
 
 #######################  User Inputs #########################
  ## maximum fraction of cluster your jobs occupy
-my_max_frac=.2
+my_max_frac=.27
 
 ## maximum fraction of cluster total occupied
 total_max_frac=.95
