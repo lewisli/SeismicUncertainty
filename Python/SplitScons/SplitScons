@@ -1,0 +1,726 @@
+#!/usr/bin/env python
+import sys
+import getopt
+import string
+import math
+import os
+
+class Usage(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+class SConstructGenerator:
+    def __init__(self, par, threads, walltime):
+
+        # Migration parameters
+        self.par = par
+
+        # PBS Parameters
+        self.threads = threads
+        self.walltime = walltime
+        
+        # Compute Shot Parameters
+        self.computeShotParameters() 
+
+        # Prepare output directories
+        self.prepareDirectories()
+
+    def prepareDirectories(self):
+        # Directory to output PBS and SConstruct files
+        self.dirt_name = 'pbs/' + self.CategoryName
+        if not os.path.exists(self.dirt_name):
+            os.makedirs(self.dirt_name)
+
+        # Prepare joblist
+        self.joblistf = open('pbs/' + self.CategoryName + 'List','w')
+
+    def GenerateTag(self,k):
+        ktag = '-%06d' % self.nlist[k]
+        ktagstr = str(ktag)
+        return (ktag,ktagstr)
+
+    def computeShotParameters(self):
+        self.par['nmig']=self.par['mignsx']*self.par['mignsy']
+
+        xshot=range(self.par['migosx'],self.par['migosx']+self.par['mignsx']*self.par['migdsx'],self.par['migdsx'])
+        yshot=range(self.par['migosy'],self.par['migosy']+self.par['mignsy']*self.par['migdsy'],self.par['migdsy'])
+
+        self.nlist=[]
+        self.xlist=[]
+        self.ylist=[]
+
+        for isx in range(self.par['mignsx']):
+            for isy in range(self.par['mignsy']):
+                xline = 9+2*(xshot[isx]-1)
+                yline = 9+2*(yshot[isy]-1)
+
+                N=1+20+4*(yline-1)+(20+4*(xline-1))*267
+                self.nlist.append(N);
+
+                x=self.par['osx']+(xline-1)*self.par['dsx']
+                y=self.par['osy']+(yline-1)*self.par['dsy']            
+                
+                self.ylist.append(y)
+                self.xlist.append(x) 
+
+        self.klist=len(self.nlist);
+
+    def GenerateSConstructHeader(self):
+        lines = []
+        lines.append('from rsf.proj import *')
+        lines.append('import dbhash')
+        lines.append('proj = Project()')    
+        lines.append('proj.SConsignFile("' + self.SubJobName + '.sconsign.dbhash", dbhash)')
+        return lines
+
+    def WriteOutput(self,SubJobName):
+         # This is the PBS file name
+        self.SubJobName = SubJobName
+
+        # SConstruct Path
+        SubJobSConscriptPath = self.dirt_name + '/SConstruct-'+SubJobName
+
+        # PBS Path
+        SubJobPBSPath = self.dirt_name + '/' + SubJobName
+
+        # Write SConstruct 
+        f = open(SubJobSConscriptPath,'w')
+        f.write(self.SConstructText)
+        f.write('\n')
+        f.close()
+
+        # Write to sublist
+        self.joblistf.write(SubJobPBSPath)
+        self.joblistf.write('\n')
+
+        self.createPBSfile(SubJobName,SubJobSConscriptPath,SubJobPBSPath,'lewisli@stanford.edu',1,self.threads,self.walltime,'default')
+       
+    def createPBSfile(self,name,SConstructPath,OutputPath,email,nodes,ppn,time,nodetype=None):
+        '''
+        Where we actually create our pbs job files. Modify this to change this to fit
+        your cluster, or changes to Mio and Ra.
+        Modified for sw121.         
+        '''
+
+        # Allow for sub hour timing
+        hours = int(math.floor(time))
+        minPercent = time-hours
+        minutes = int(round(minPercent*60))
+
+        lines = []
+        lines.append('#!/bin/tcsh')
+        lines.append('#PBS -l nodes=%d:ppn=%d' % (nodes,ppn))
+        lines.append('#PBS -e %s/%s.err' % (self.dirt_name,name))
+        lines.append('#PBS -o %s/%s.out' % (self.dirt_name,name))
+        lines.append('#PBS -l naccesspolicy=singlejob')
+        lines.append('#PBS -N %s' % name)
+        lines.append('#PBS -j oe')
+        lines.append('#PBS -l walltime=%d:%02d:00' % (hours,minutes))
+        lines.append('#PBS -V')
+        lines.append('#PBS -q %s' % nodetype)
+        lines.append('#PBS -W x="PARTITION:sw121"')
+        if email:
+            lines.append('#PBS -m a')
+            lines.append('#PBS -M %s' % email)
+        lines.append('#-----------')
+        lines.append('setenv SCONS_OVERRIDE 1')
+        lines.append('cd $PBS_O_WORKDIR')
+        lines.append('%s -f %s' % ('scons', SConstructPath))
+
+        file = open(OutputPath,'w')
+        text = string.join(lines,'\n')
+        file.write(text)
+        file.write('\n')
+        file.close()
+
+# Serial job with 1 core
+class Job1(SConstructGenerator):
+
+    def __init__(self,par,threads,walltime, velocityModel):
+        self.CategoryName = 'Part1'
+        self.velocitymodel = velocityModel
+        SConstructGenerator.__init__(self,par,threads,walltime)
+        self.GenerateText()
+        self.WriteOutput(par['jobname'] + '-' + self.CategoryName)
+        self.joblistf.close()
+
+    def GenerateText(self):
+        lines = []
+        lines.append(
+"""try:    from rsf.cluster import *
+except: from rsf.proj    import *
+import rsf.recipes.fdmod as fdmod
+import rsf.recipes.encode as encode
+import rsf.recipes.wei as wei
+import math
+
+par = dict( nt=2000,   ot=0, dt=0.008, lt='t',   ut='s',
+            nx=1167,   ox=0, dx=0.03,  lx='x',   ux='km',
+            ny=1333,   oy=0, dy=0.03,  ly='y',   uy='km',
+            nz=1501,   oz=0, dz=0.01,  lz='z',   uz='km',
+            osx=3.050, dsx=0.6,  lsx='sx', usx='km', # source x
+            osy=3.025, dsy=0.6,  lsy='sy', usy='km', # source y
+            nrx=661,   drx=0.03, lrx='rx', urx='km', # receiver x
+            nry=661,   dry=0.03, lry='ry', ury='km'  # receiver y
+    )
+parmig=par.copy()
+fdmod.param(par)
+
+par['orx']=-(par['nrx']-1)/2*par['drx']
+par['ory']=-(par['nry']-1)/2*par['dry']
+
+par['jx']=1
+par['jy']=1
+par['jz']=2
+par['nzmig']=600
+
+# migration parameters (padded domain)
+par['nypad']=70/par['jy']
+par['nxpad']=70/par['jx']
+par['hmx']=((par['nry']-1)/2/par['jy']+par['nypad'])
+par['hmy']=((par['nry']-1)/2/par['jy']+par['nypad'])
+par['nmx']=par['hmx']*2
+par['nmy']=par['hmy']*2
+
+# migration parameters
+par['nw']=160
+par['ow']=1
+par['jw']=2
+
+par['nrmax']=5
+par['tmx']=32
+par['tmy']=32
+par['verb']='y'
+wei.wempar(par)
+
+parmig['nx']=500
+parmig['ox']=5
+parmig['dx']=par['dx']*2
+parmig['ny']=500
+parmig['oy']=0.0
+parmig['dy']=par['dy']*2
+parmig['nz']=par['nzmig']
+parmig['dz']=par['dz']*par['jz']
+fdmod.param(parmig)
+
+# ------------------------------------------------------------
+section=' screenratio=0.375 screenht=5.0 min2=16 max2=32 max1=6'
+overlay=' screenratio=0.375 screenht=5.0 min1=16 max1=32 max2=6'
+
+# ------------------------------------------------------------
+def greyyx(custom,par):
+    return '''
+    grey title="" pclip=100 gainpanel=a
+    min1=%g max1=%g label1="\F2 %s\F3" unit1=%s
+    min2=%g max2=%g label2="\F2 %s\F3" unit2=%s
+    screenratio=%f screenht=10
+    %s
+    '''% (
+    par['ymax'],par['ymin'],par['ly'],par['uy'],
+    par['xmin'],par['xmax'],par['lx'],par['ux'],
+    1.0*par['ny']/par['nx'],
+    par['labelattr']+' '+par['labelrot']+' '+custom)
+
+def graphyx(custom,par):
+    return '''
+    dd type=complex |
+    graph title="" labelrot=n wantaxis=y yreverse=n
+    min2=%g max2=%g label2="\F2 %s\F3" unit2=%s
+    min1=%g max1=%g label1="\F2 %s\F3" unit1=%s
+    screenratio=%g screenht=10
+    %s
+    ''' % (
+    par['ymin'],par['ymax'],par['ly'],par['uy'],
+    par['xmin'],par['xmax'],par['lx'],par['ux'],
+    1.0*par['ny']/par['nx'],
+    par['labelattr']+' '+par['labelrot']+' '+custom)
+
+def greyzx(x,custom,par):
+    return '''
+    grey title="" pclip=100 gainpanel=a
+    min1=%g max1=%g label1="\F2 %s\F3" unit1=%s
+    min2=%g max2=%g label2="\F2 %s\F3" unit2=%s
+    screenratio=%g screenht=10
+    %s
+    ''' % (
+    par['zmin'],par['zmax'],par['lz'],par['uz'],
+    x-par['hmx']*par['drx']/2,
+    x+par['hmx']*par['drx']/2,par['lx'],par['ux'],
+    1.0*(par['nz']*par['dz'])/(par['nmx']*par['drx']/2),
+    par['labelattr']+' '+par['labelrot']+' '+custom)
+
+def graphzx(custom,par):
+    return '''
+    dd type=complex |
+    graph title="" labelrot=n wantaxis=n yreverse=y
+    min1=%g max1=%g label1="\F2 %s\F3" unit1=%s
+    min2=%g max2=%g label2="\F2 %s\F3" unit2=%s
+    screenratio=%g screenht=10
+    %s
+    ''' % (
+    par['zmin'],par['zmax'],par['lz'],par['uz'],
+    par['xmin'],par['xmax'],par['lx'],par['ux'],
+    1.0*(par['nmx']*par['drx']/2)/(par['nz']*par['dz']),
+    par['labelattr']+' '+par['labelrot']+' '+custom)
+
+# ------------------------------------------------------------
+# 2793 shots
+fdmod.boxarray('ss2793',
+               57,par['osy'],par['dsy'],
+               49,par['osx'],par['dsx'],par)
+Plot('ss2793',graphyx('plotfat=5 symbol=. plotcol=1',par))
+
+#  725 shots 
+fdmod.boxarray('ss0725',
+               29,par['osy'],par['dsy']*2,
+               25,par['osx'],par['dsx']*2,par)
+Plot('ss0725',graphyx('plotfat=5 symbol=. plotcol=2',par))
+
+#  357 shots 
+fdmod.boxarray('ss0357',
+               21,par['osy']+4*(2*par['dsy']),par['dsy']*2,
+               17,par['osx']+4*(2*par['dsx']),par['dsx']*2,par)
+Plot('ss0357',graphyx('plotfat=5 symbol=. plotcol=5',par))
+
+# ------------------------------------------------------------
+# index on the small grid (i.e. the grid of 357 sources)
+par['mignsx']=8
+par['migosx']=8
+par['migdsx']=1
+
+par['mignsy']=8
+par['migosy']=3
+par['migdsy']=1
+
+par['nmig']=par['mignsx']*par['mignsy']
+
+xshot=range(par['migosx'],par['migosx']+par['mignsx']*par['migdsx'],par['migdsx'])
+yshot=range(par['migosy'],par['migosy']+par['mignsy']*par['migdsy'],par['migdsy'])
+
+nlist=[];
+xlist=[];
+ylist=[];
+for isx in range(par['mignsx']):
+    for isy in range(par['mignsy']):
+        xline = 9+2*(xshot[isx]-1)
+        yline = 9+2*(yshot[isy]-1)
+
+        N=1+20+4*(yline-1)+(20+4*(xline-1))*267
+        nlist.append(N);
+
+        x=par['osx']+(xline-1)*par['dsx']
+        y=par['osy']+(yline-1)*par['dsy']
+
+        xlist.append(x);
+        ylist.append(y);
+
+# ------------------------------------------------------------
+# print shot names in file
+f = open('shots.txt', 'w')
+klist=len(nlist);
+for k in range(klist):
+    print "shot #",nlist[k]," @ {x,y}={",xlist[k],",",ylist[k],"}"
+    f.write("SOURCE_0%d.sgy\n"%nlist[k])
+f.close()
+    
+# ------------------------------------------------------------
+for k in range(klist):
+    ktag = '-%06d' % nlist[k]
+
+    # shot position
+    fdmod.point('ss'+ktag,xlist[k],ylist[k],par)
+    Plot('ss'+ktag,graphyx('plotfat=10 symbol=. plotcol=6',par))
+
+    # receiver positions
+    fdmod.boxarray('rr'+ktag,
+               par['nry'],ylist[k]-(par['nry']-1)/2*par['dry'],par['dry'],
+               par['nrx'],xlist[k]-(par['nrx']-1)/2*par['drx'],par['drx'],par)
+    Plot('rr'+ktag,'put n2=%(nry)d n3=%(nrx)d | window j2=30 j3=5 |'%par+
+         graphyx('plotfat=2 symbol=. plotcol=2',par))
+
+    fdmod.boxarray('mm'+ktag,
+                   par['nmy'],ylist[k]-par['hmy']*par['dry']*par['jy'],par['dry']*par['jy'],
+                   par['nmx'],xlist[k]-par['hmx']*par['drx']*par['jx'],par['drx']*par['jx'],par)
+    Plot('mm'+ktag,'window j2=71 |'+
+         graphyx('plotfat=2 symbol=. plotcol=1',par))
+
+Plot('ss',['ss-%06d'%nlist[k] for k in range(klist)],'Overlay')
+
+# ------------------------------------------------------------
+par['xcip']=20.00
+par['ycip']=15.50
+par['zcip']=9.5
+print "CIP @",par['xcip'],par['ycip'],par['zcip']
+
+ixcip=(par['xcip']-parmig['ox'])/(parmig['dx'])
+iycip=(par['ycip']-parmig['oy'])/(parmig['dy'])
+izcip=(par['zcip']-parmig['oz'])/(parmig['dz'])
+
+# ------------------------------------------------------------
+# velocity""")
+        lines.append("""velo="/data/groups/scrf/data/Seismic/Velocity/""" + self.velocitymodel)
+        lines.append("""
+Flow('velo',None,
+     'window j1=2 j2=2 j3=%d <%s'%(par['jz'],velo))
+
+Result('velo','transp plane=23 | transp plane=12 |'
+       +fdmod.ccut3d('|',parmig)
+       +'byte gainpanel=a pclip=99.9 allpos=y bias=1.5 |'
+       +fdmod.cgrey3d('frame1=%d frame2=%d frame3=%d color=E'%(izcip,ixcip,iycip)+par['labelrot0'],parmig))
+
+Plot('vslice','velo',
+     'window n3=1 f3=%d | transp |'%izcip+
+     'reverse which=1 | put o1=%g d1=-%g |'%(par['ymax'],2*par['dy']) +
+     greyyx('mean=y',par))
+Result('vpall',['vslice','ss2793','ss0725','ss0357','ss'],'Overlay')
+Result('vpwin',['vslice',                  'ss0357','ss'],'Overlay')
+for k in range(klist):
+    ktag = '-%06d' % nlist[k]
+    Result('vpmig'+ktag,['vslice','rr'+ktag,'ss0357','ss'+ktag],'Overlay')
+
+# ------------------------------------------------------------
+# velocity slice
+Result('vcut','velo',
+        'window n2=1 min2=%(ycip)g | transp |'%par
+        + fdmod.cgrey('pclip=100 color=E allpos=y bias=1.5'+section,par))
+
+# ------------------------------------------------------------
+# slowness
+Flow('slow','velo','window n3=%(nzmig)d | math output="1/input"'%par)
+Result('scut','slow',
+        'window n2=1 min2=%(ycip)g | transp |'%par
+        + fdmod.cgrey('pclip=99.9 color=j allpos=y bias=0.2'+section,par))
+
+Flow('sxy','slow','window n3=1')
+Flow('syx','sxy','transp')
+
+# datuming slowness (0.015km up to the surface; v=1.49km/s)
+Flow('slod',None,
+     '''
+     spike nsp=1 mag=1.49
+     n1=%(nx)d o1=%(ox)g d1=%(dx)d
+     n2=%(ny)d o2=%(oy)g d2=%(dy)d
+     n3=2      o3=%(oz)g d3=0.015 |
+     math output="1/input"
+     ''' %par)
+
+# ------------------------------------------------------------
+# wavelet
+wavelet="/data/groups/scrf/data/Seismic/Wavelets/SEAM_wavelet-g_8ms.sgy"
+
+Flow(  'wavelet',wavelet,'segyread tape=$SOURCE tfile=/dev/null format=5')
+Result('wavelet','window n1=100 | graph title="" pclip=100 grid=y')
+
+Flow('wvl',None,
+     '''
+     spike nsp=1 mag=1
+     n1=%(nt)d d1=%(dt)g  o1=%(ot)g label1=%(lt)s  unit1=%(ut)s
+     k1=15 l1=15
+     '''%par)
+encode.time2freq('wvl','frq',par)
+
+# source data (frq)
+Flow('sfrq','frq',
+     '''
+     pad beg1=%d n1out=%d beg2=%d n2out=%d |
+     ''' %( (par['nrx']-1)/2/par['jx'],
+            (par['nrx']-1)/1/par['jx']+1,
+            (par['nry']-1)/2/par['jy'],
+            (par['nry']-1)/1/par['jy']+1) +
+     '''
+     put o1=%g d1=%g o2=%g d2=%g 
+     ''' %( par['orx'],
+            par['drx']*par['jx'],
+            par['ory'],
+            par['dry']*par['jy']))
+
+# ------------------------------------------------------------
+# data taper
+Flow('taper',None,
+     '''
+     spike nsp=1 mag=1
+     n1=%d k1=%d l1=%d
+     n2=%d k2=%d l2=%d
+     n3=%d |
+     smooth rect1=50 rect2=50 |
+     rtoc
+     ''' % (par['nmx'],51,par['nmx']-50,
+            par['nmy'],51,par['nmy']-50,
+            par['nw']) )
+""")
+
+    
+
+        self.SConstructText = string.join(lines,'\n')
+
+class Job2(SConstructGenerator):
+
+    def __init__(self,par,threads=8,walltime=0.75):
+        self.CategoryName = 'Part2'
+        SConstructGenerator.__init__(self,par,threads,walltime)
+
+        for k in range(self.par['TestNum']):
+            ktag,ktagstr = self.GenerateTag(k)
+            self.SubJobName = self.par['jobname'] + '-' + self.CategoryName + str(ktag)
+            
+            self.GenerateText(k)
+            self.WriteOutput(self.SubJobName)
+
+        self.joblistf.close()
+
+    def GenerateText(self,k):
+        ktag,ktagstr = self.GenerateTag(k)
+
+        lines = self.GenerateSConstructHeader()
+        lines.append('Flow([ "data'+ktagstr+ '","head'+ktagstr+'"],None, "segyread tape=/data/groups/scrf/data/Seismic/SHOTS/SOURCE_0' 
+                 + str(self.nlist[k]) + '.sgy format=5 tfile=${TARGETS[1]}|'+
+                 'put label1=' + str(self.par['lt']) +  ' unit1=' + str(self.par['ut']) + 
+                 ' n2=' + str(self.par['nry']) + ' o2=' + str(self.par['ory']) + ' d2=' + str(self.par['dry']) + ' label2=' + str(self.par['lry']) 
+                 + ' unit2=' + str(self.par['ury']) +
+                 ' n3=' + str(self.par['nrx']) + ' o3=' + str(self.par['orx']) + ' d3=' + str(self.par['drx']) + ' label3=' + str(self.par['lrx']) 
+                 + ' unit3=' + str(self.par['urx']) + '|' +
+                 ' window n1=' + str(self.par['nt']) + ' j2=' + str(self.par['jy']) + ' j3=' + str(self.par['jx']) + ' | '  
+                 ' transp plane=23 |' +
+                 ' window f1=250 | pad beg1=250 |' +
+                 ' bandpass flo=3 fhi=15")')
+
+        lines.append('Result("dcut'+ktagstr + '","data'+ktagstr + '",' + '"window n3=1 min3=0 | grey title="" pclip=99")')
+
+        # Get reciever data in frequency
+        lines.append('Flow("rfrq' + ktagstr +'","data'+ ktagstr + '","fft1 inv=n opt=n | window squeeze=n n1=' + str(self.par['nw']) + 
+                ' min1=1 j1=2 | transp plane=12 | transp plane=23 | put label1=x label2=y label3=w label4=e o2=' + str(self.par['ory']) + 
+                ' d2=' + str(self.par['dry']) + ' unit1=km label1=x unit2=km label2=y")')
+
+        # Tape data in space
+        lines.append('Flow("rtap'+ktagstr + '",["rfrq'+ktagstr+'","taper"],' + """ '''pad beg1=""" + str(self.par['nxpad']) + ' n1out=' 
+            + str(self.par['nmx']) + ' beg2=' + str(self.par['nypad']) + ' n2out=' + str(self.par['nmy']) 
+            + """|math t=${SOURCES[1]} output="input*t" | put o1=""" 
+            + str(self.xlist[k]-self.par['hmx']*self.par['drx']*self.par['jx']) + " o2=" 
+            + str(self.ylist[k]-self.par['hmy']*self.par['dry']*self.par['jy']) + """ ''') """)
+
+        # Tape data in space
+        lines.append('Flow("stap'+ktagstr + '",["sfrq","taper"],' + """ '''pad beg1=""" + str(self.par['nxpad']) + ' n1out=' 
+            + str(self.par['nmx']) + ' beg2=' + str(self.par['nypad']) + ' n2out=' + str(self.par['nmy']) 
+            + '|math t=${SOURCES[1]} output="input*t" | put o1=' 
+            + str(self.xlist[k]-self.par['hmx']*self.par['drx']*self.par['jx']) + ' o2=' 
+            + str(self.ylist[k]-self.par['hmy']*self.par['dry']*self.par['jy']) + """ ''') """)
+
+        lines.append('Flow("dfs'+ ktagstr + '",["stap' + ktagstr +'", "slod"], "wei verb=y irun=dtm causal=n slo=${SOURCES[1]} --readwrite=y verb=y nrmax=' 
+            + str(self.par['nrmax']) + ' dtmax=5e-05 eps=0.1 tmx=32 tmy=32 causal=n")')
+        lines.append('Flow("dfr'+ ktagstr + '",["rtap' + ktagstr +'", "slod"], "wei verb=y irun=dtm causal=n slo=${SOURCES[1]} --readwrite=y verb=y nrmax=' 
+            + str(self.par['nrmax']) + ' dtmax=5e-05 eps=0.1 tmx=32 tmy=32 causal=y")')
+         
+        self.SConstructText = string.join(lines,'\n')
+
+class Job3(SConstructGenerator):
+    def __init__(self,par,threads=8,walltime=2):
+        self.CategoryName = 'Part3'
+        SConstructGenerator.__init__(self,par,threads,walltime)
+
+        for k in range(self.par['TestNum']):
+            ktag,ktagstr = self.GenerateTag(k)
+            for s in range(self.par['cigsplit']):
+                self.SubJobName = self.par['jobname'] + '-' + self.CategoryName + str(ktag) + '-' + str(s)
+                self.GenerateText(k,s)
+                self.WriteOutput(self.SubJobName)
+
+        self.joblistf.close()
+
+    def GenerateText(self,k,s):
+        ktag,ktagstr = self.GenerateTag(k)
+
+        lines = self.GenerateSConstructHeader()    
+        lines.append('Flow("cic' + ktagstr + '_' + str(s) + '", ["dfs' + ktagstr + '","dfr' + ktagstr + '","slow"], ' + 
+         """ '''weilewis verb=y irun=cic dat=${SOURCES[1]} slo=${SOURCES[2]} splitindex=""" 
+         + str(s) + " cigsplit=" + str(self.par['cigsplit']) 
+         + " --readwrite=y verb=y nrmax=5 dtmax=5e-05 eps=0.1 tmx=32 tmy=32" 
+         + """ ''') """ )
+
+        self.SConstructText = string.join(lines,'\n')
+
+class Job4(SConstructGenerator):
+    def __init__(self,par,threads=1,walltime=0.5):
+        self.CategoryName = 'Part4'
+        SConstructGenerator.__init__(self,par,threads,walltime)
+        
+        for k in range(self.par['TestNum']):
+            ktag,ktagstr = self.GenerateTag(k)
+            self.SubJobName = self.par['jobname'] + '-' + self.CategoryName + str(ktag)
+            self.GenerateText(k)
+            self.WriteOutput(self.SubJobName)
+
+        self.joblistf.close()
+
+    def GenerateText(self,k):
+        ktag,ktagstr = self.GenerateTag(k)
+        cic_split_list = []
+
+        for s in range(self.par['cigsplit']):
+            cic_split_list.append("'cic" + ktagstr + '_' + str(s) + "'")
+
+        text = '[' + string.join(cic_split_list,',') + ']'
+
+        lines = self.GenerateSConstructHeader()
+        lines.append('Flow("cic' + ktagstr + '",' + text + """,'''add scale=1,1 ${SOURCES[1:-1]}''')"""  )
+        lines.append('Flow("cwn' + ktagstr + '",["cic' + ktagstr + '", "sxy", "syx"],' +
+        """ ''' remap1 pattern=${SOURCES[1]} order=1 |
+        transp |
+        remap1 pattern=${SOURCES[2]} order=1 |
+        transp
+        ''')"""  )
+
+        lines.append('Result("ccut' + ktagstr + '",' + '"cwn' + ktagstr + '",' + 
+        """ '''window n2=1 min2=15.5 | transp |   
+        grey
+        title=""
+        pclip=100 gainpanel=a
+        min1=0 max1=15 label1=z unit1=km
+        min2=0 max2=34.98 label2=x unit2=km
+        screenratio=0.428816 screenht=5.84262 wantscalebar=n
+        parallel2=n labelsz=6 labelfat=3 titlesz=12 titlefat=3 pclip=99.9 screenratio=0.375 screenht=5.0 min2=16 max2=32 max1=6
+        ''')""")
+
+        self.SConstructText = string.join(lines,'\n')
+
+class Job5(SConstructGenerator):
+    def __init__(self,par,threads,walltime):
+        self.CategoryName = 'Part5'
+        SConstructGenerator.__init__(self,par,threads,walltime)
+        self.SubJobName = self.par['jobname'] + '-' + self.CategoryName
+        self.GenerateText()
+        self.WriteOutput(self.SubJobName)
+
+        self.joblistf.close()
+
+    def GenerateText(self):
+        cstk_list = []
+        for k in range(self.par['TestNum']):
+            ktag,ktagstr = self.GenerateTag(k)
+            cstk_list.append('"cic' + ktagstr + "'")
+
+        text = '[' + string.join(cstk_list,',') + ']'
+
+        lines = self.GenerateSConstructHeader()
+
+        lines.append('Flow("cstk",' + text + """,''' cat axis=4 space=n ${SOURCES[1:-1]} |
+        transp plane=34 | transp plane=23 | stack ''') """)
+
+        lines.append("""Result("cstk",
+        '''transp plane=23 | transp plane=12 | tpow tpow=2 |
+        window min1=0 max1=11.98 min2=5 max2=34.94 min3=0 max3=29.94 |
+        byte gainpanel=a pclip=99.0 |
+        grey3 title="" framelabel=n parallel2=n
+        label1=z unit1=km
+        label2=x unit2=km
+        label3=y unit3=km
+        frame1=300 frame2=250 frame3=250
+        flat=y screenratio=0.700067 screenht=9.80094 point1=0.285782 point2=0.5
+        xll=1.5 yll=1.5
+        parallel2=n labelsz=6 labelfat=3 titlesz=12 titlefat=3  frame1=475 frame2=250 frame3=258 parallel2=n format1=%3.0f format2=%3.0f format3=%3.0f
+        ''')""")
+
+        lines.append("""Result("ccut","cstk",
+        '''window n2=1 min2=15.5 | transp |
+        grey
+        title=""
+        pclip=100 gainpanel=a
+        min1=0 max1=15 label1=z unit1=km
+        min2=0 max2=34.98 label2=x unit2=km
+        screenratio=0.428816 screenht=5.84262 wantscalebar=n
+         parallel2=n labelsz=6 labelfat=3 titlesz=12 titlefat=3 pclip=99.0 screenratio=0.375 screenht=5.0 min2=16 max2=32 max1=6
+        ''')"""
+        )
+
+        for k in range(self.par['TestNum']):
+            ktag = '-%06d' % self.nlist[k]
+            ktagstr = str(ktag)
+            kstr = str(k)
+
+            lines.append("Result('cwn"+ktagstr + '","cwn-byt",' + 
+            """ ''' window n4=1 f4 =""" + kstr +  """| transp plane=23 | transp plane=12 |
+            window min1=0 max1=11.98 min2=5 max2=34.94 min3=0 max3=29.94 |
+
+            grey3 title="" framelabel=n parallel2=n
+            label1=z unit1=km
+            label2=x unit2=km
+            label3=y unit3=km
+            frame1=300 frame2=250 frame3=250
+            flat=y screenratio=0.700067 screenht=9.80094 point1=0.285782 point2=0.5
+            xll=1.5 yll=1.5
+             parallel2=n labelsz=6 labelfat=3 titlesz=12 titlefat=3  frame1=475 frame2=250 frame3=258 parallel2=n format1=%3.0f format2=%3.0f format3=%3.0f
+            ''')""")
+
+        self.SConstructText = string.join(lines,'\n')
+        
+
+
+def main(argv=None):
+    
+    if len(sys.argv) < 2:
+        print 'Usage: SplitSCons VelocityModel'
+        sys.exit(0)
+    else:
+        VelocityModelName = sys.argv[1]
+        print VelocityModelName
+    
+    par = dict( nt=2000,   ot=0, dt=0.008, lt='t',   ut='s',
+                nx=1167,   ox=0, dx=0.03,  lx='x',   ux='km',
+                ny=1333,   oy=0, dy=0.03,  ly='y',   uy='km',
+                nz=1501,   oz=0, dz=0.01,  lz='z',   uz='km',
+                osx=3.050, dsx=0.6,  lsx='sx', usx='km', # source x
+                osy=3.025, dsy=0.6,  lsy='sy', usy='km', # source y
+                nrx=661,   drx=0.03, lrx='rx', urx='km', # receiver x
+                nry=661,   dry=0.03, lry='ry', ury='km'  # receiver y
+        )
+
+    par['orx']=-(par['nrx']-1)/2*par['drx']
+    par['ory']=-(par['nry']-1)/2*par['dry']
+    par['jx']=1
+    par['jy']=1
+    par['jz']=2
+    par['nzmig']=600
+    par['nypad']=70/par['jy']
+    par['nxpad']=70/par['jx']
+    par['hmx']=((par['nry']-1)/2/par['jy']+par['nypad'])
+    par['hmy']=((par['nry']-1)/2/par['jy']+par['nypad'])
+    par['nmx']=par['hmx']*2
+    par['nmy']=par['hmy']*2
+    par['mignsx']=8
+    par['migosx']=8
+    par['migdsx']=1
+    par['mignsy']=8
+    par['migosy']=3
+    par['migdsy']=1
+    par['nw']=160
+    par['ow']=1
+    par['jw']=2
+    par['nrmax']=5
+    par['tmx']=32
+    par['tmy']=32
+    par['verb']='y'
+    par['nypad']=70/par['jy']
+    par['nxpad']=70/par['jx']
+
+
+    # Name of Job
+    par['jobname'] = 'SampleTest'
+    par['cigsplit'] = 4
+    par['TestNum'] = 2
+
+    # Prepare velocity model
+    Job1(par,1,0.5,'BestGuessMidResTrilinear.hh')
+
+    # Prepare data
+    Job2(par,8,0.5)
+
+    # Run Migrations
+    Job3(par,8,2)
+
+    # Add split migration
+    Job4(par,1,0.5)
+
+    # Stack and plot
+    Job5(par,1,0.5)
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
