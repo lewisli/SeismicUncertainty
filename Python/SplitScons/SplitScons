@@ -350,7 +350,7 @@ izcip=(par['zcip']-parmig['oz'])/(parmig['dz'])
 
 # ------------------------------------------------------------
 # velocity""")
-        lines.append("""velo="/data/groups/scrf/data/Seismic/Velocity/""" + self.velocitymodel + '"')
+        lines.append("""velo="/data/groups/scrf/data/Seismic/Velocity/SEAM/3D/""" + self.velocitymodel + '"')
         lines.append("""
 Flow('velo',None,
      'window j1=2 j2=2 j3=%d <%s'%(par['jz'],velo))
@@ -556,13 +556,13 @@ class Job4(SConstructGenerator):
         lines.append('Flow("cic' + ktagstr + '",' + text + """,'''add scale=1,1 ${SOURCES[1:-1]}''')"""  )
         lines.append('Flow("cwn' + ktagstr + '",["cic' + ktagstr + '", "sxy", "syx"],' +
         """ ''' remap1 pattern=${SOURCES[1]} order=1 |
-        transp |
+        transp memsize=16000|
         remap1 pattern=${SOURCES[2]} order=1 |
-        transp
+        transp memsize=16000
         ''')"""  )
 
         lines.append('Result("ccut' + ktagstr + '",' + '"cwn' + ktagstr + '",' + 
-        """ '''window n2=1 min2=15.5 | transp |   
+        """ '''window n2=1 min2=15.5 | transp memsize=16000|   
         grey
         title=""
         pclip=100 gainpanel=a
@@ -697,10 +697,10 @@ def main(argv=None):
     # Name of Job
     par['jobname'] = VelocityModelName
     par['cigsplit'] = 4
-    par['TestNum'] = 2
+    par['TestNum'] = 64
 
     # Prepare velocity model
-    Job1(par,1,0.5,VelocityModelName)
+    Job1(par,1,0.75,VelocityModelName)
 
     # Prepare data
     Job2(par,8,0.5)
@@ -709,10 +709,10 @@ def main(argv=None):
     Job3(par,8,2)
 
     # Add split migration
-    Job4(par,1,0.5)
+    Job4(par,1,0.75)
 
     # Stack and plot
-    Job5(par,1,0.5)
+    Job5(par,1,0.75)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

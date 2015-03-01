@@ -3,14 +3,14 @@ close all;
 clear all;
 
 DataPath = getenv('SYNCDATAPATH');
-file_path = [DataPath '/Seismic/Sumo/BestGuessMidRes.smh@'];
+file_path = [DataPath '/Seismic/Sumo/PerlinTest.smh@'];
 OriginalSize = [350 400 150];
 BestGuessMidRes = ReadSeismicCube(file_path, OriginalSize,4);
 
 %%
 FullResolutionSize = [1167 1334 1501];
 %FullResolutionSize = [400 500 300];
-OutputFilename = [DataPath '/Seismic/Velocity/SEAM/3D/BestGuessMidResTrilinear.hh@'];
+OutputFilename = [DataPath '/Seismic/Velocity/SEAM/3D/PerlinTest.hh@'];
 
 InterpolateVelocityModel( OutputFilename, BestGuessMidRes/1000, ...
     OriginalSize, FullResolutionSize );
