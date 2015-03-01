@@ -349,7 +349,7 @@ izcip=(par['zcip']-parmig['oz'])/(parmig['dz'])
 
 # ------------------------------------------------------------
 # velocity""")
-        lines.append("""velo="/data/groups/scrf/data/Seismic/Velocity/""" + self.velocitymodel)
+        lines.append("""velo="/data/groups/scrf/data/Seismic/Velocity/""" + self.velocitymodel + '"')
         lines.append("""
 Flow('velo',None,
      'window j1=2 j2=2 j3=%d <%s'%(par['jz'],velo))
