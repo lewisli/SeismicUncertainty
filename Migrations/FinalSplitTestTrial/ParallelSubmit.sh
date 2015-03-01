@@ -7,7 +7,7 @@
 
 #######################  User Inputs #########################
  ## maximum fraction of cluster your jobs occupy
-my_max_frac=.27
+my_max_frac=.2
 
 ## maximum fraction of cluster total occupied
 total_max_frac=.95
@@ -28,8 +28,7 @@ report_file=OutputLog.txt
 ## jobs to submit at a time
 num_to_submit=2
 
-# store job ids
-job_list=$2
+
 ##############################################################
 
 ## record date
@@ -94,7 +93,7 @@ do
     echo "submitting next ${num_to_submit}"
   fi
   echo "${next}" >> ${report_file}
-  qsub ${nexti} >> ${job_list} 
+  qsub ${next} 
   outer_count=$(echo "scale=3; ${outer_count} + 1" | bc)
 
 done

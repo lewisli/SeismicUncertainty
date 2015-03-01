@@ -1,0 +1,4 @@
+/var/spool/torque/mom_priv/jobs/13621135.cees-cluster.stanford.edu.SC: line 1: from: command not found
+import: unable to open X server `'.
+/var/spool/torque/mom_priv/jobs/13621135.cees-cluster.stanford.edu.SC: line 4: syntax error near unexpected token `('
+/var/spool/torque/mom_priv/jobs/13621135.cees-cluster.stanford.edu.SC: line 4: `proj = Project()'

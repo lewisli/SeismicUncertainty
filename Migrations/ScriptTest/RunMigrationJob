@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Create pbs files
+SplitScons PerlinTest.hh
+
+# Run Job 1
+ParallelSubmit.sh pbs/Part1List pbs/Part1JobIDs
+WaitForJobs.sh pbs/Part1JobIDs
+
+# Run Job 2
+NewSubmit.sh pbs/Part2List pbs/Part2JobIDs
+WaitForJobs.sh pbs/Part2JobIDs
+
+# Run Job 3
+NewSubmit.sh pbs/Part3List pbs/Part3JobIDs
+WaitForJobs.sh pbs/Part3JobIDs
+
+# Run Job 4
+NewSubmit.sh pbs/Part4List pbs/Part4JobIDs
+WaitForJobs.sh pbs/Part4JobIDs
+
+# Run Job 5
+NewSubmit.sh pbs/Part5List pbs/Part5JobIDs
+WaitForJobs.sh pbs/Part5JobIDs

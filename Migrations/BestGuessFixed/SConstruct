@@ -6,10 +6,10 @@ import rsf.recipes.wei as wei
 import math
 
 # ------------------------------------------------------------
-Cluster(name='sbig357',email='lewisli@stanford.edu',time=50,ppn=8,nodetype='Q26a',scheduler='pbs')
+Cluster(name='BestGuessMidResTrilinear1',email='lewisli@stanford.edu.edu',time=100,ppn=8,
+nodetype = 'Q26a', scheduler='pbs')
 # ------------------------------------------------------------
 nodes=8
-ipern=8
 
 par = dict( nt=2000,   ot=0, dt=0.008, lt='t',   ut='s',
             nx=1167,   ox=0, dx=0.03,  lx='x',   ux='km',
@@ -171,10 +171,15 @@ for isx in range(par['mignsx']):
         xlist.append(x);
         ylist.append(y);
 
+# ------------------------------------------------------------
+# print shot names in file
+f = open('shots.txt', 'w')
 klist=len(nlist);
 for k in range(klist):
     print "shot #",nlist[k]," @ {x,y}={",xlist[k],",",ylist[k],"}"
-
+    f.write("SOURCE_0%d.sgy\n"%nlist[k])
+f.close()
+    
 # ------------------------------------------------------------
 for k in range(klist):
     ktag = '-%06d' % nlist[k]
@@ -210,7 +215,7 @@ izcip=(par['zcip']-parmig['oz'])/(parmig['dz'])
 
 # ------------------------------------------------------------
 # velocity
-velo="/data/cees/lewisli/SEAM/Velocity/vp.hh"
+velo="/data/groups/scrf/data/seam/Velocity/BestGuessMidResTrilinear.hh"
 
 Flow('velo',None,
      'window j1=2 j2=2 j3=%d <%s'%(par['jz'],velo))
@@ -218,7 +223,7 @@ Flow('velo',None,
 Result('velo','transp plane=23 | transp plane=12 |'
        +fdmod.ccut3d('|',parmig)
        +'byte gainpanel=a pclip=99.9 allpos=y bias=1.5 |'
-       +fdmod.cgrey3d('frame1=%d frame2=%d frame3=%d color=E yll=1'%(izcip,ixcip,iycip)+par['labelrot0'],parmig))
+       +fdmod.cgrey3d('frame1=%d frame2=%d frame3=%d color=E'%(izcip,ixcip,iycip)+par['labelrot0'],parmig))
 
 Plot('vslice','velo',
      'window n3=1 f3=%d | transp |'%izcip+
@@ -258,7 +263,7 @@ Flow('slod',None,
 
 # ------------------------------------------------------------
 # wavelet
-wavelet="/data/cees/lewisli/SEAM/Wavelets/SEAM_wavelet-g_8ms.sgy"
+wavelet="/data/groups/scrf/data/seam/Wavelets/SEAM_wavelet-g_8ms.sgy"
 
 Flow(  'wavelet',wavelet,'segyread tape=$SOURCE tfile=/dev/null format=5')
 Result('wavelet','window n1=100 | graph title="" pclip=100 grid=y')
@@ -301,7 +306,7 @@ Flow('taper',None,
             par['nw']) )
 
 # ------------------------------------------------------------
-Fork(time=50,ipn=ipern,nodes=nodes)
+Fork(time=72,ipn=int(klist/nodes),nodes=nodes)
 for k in range(klist):
     ktag = '-%06d' % nlist[k]
     print "SOURCE_0%d.sgy" %nlist[k]
@@ -311,7 +316,7 @@ for k in range(klist):
     # SEGY to RSF (input is IEEE format)
     # ------------------------------------------------------------
     Flow(['data'+ktag,'head'+ktag],None,
-         'segyread tape=/data/cees/lewisli/SEAM/SHOTS/SOURCE_0%d.sgy format=5 tfile=${TARGETS[1]}|'%nlist[k] +
+         'segyread tape=/data/groups/scrf/data/seam/SHOTS/SOURCE_0%d.sgy format=5 tfile=${TARGETS[1]}|'%nlist[k] +
          '''
          put                              label1=%(lt)s  unit1=%(ut)s
          n2=%(nry)d o2=%(ory)g d2=%(dry)g label2=%(lry)s unit2=%(ury)s
@@ -385,7 +390,7 @@ Flow('cstk',['cwn-%06d'%nlist[k] for k in range(klist)],
      transp plane=34 | transp plane=23 |
      stack 
      '''%len(range(klist)))
-Result('cstk','transp plane=23 | transp plane=12 |'
+Result('cstk','transp plane=23 | transp plane=12 | tpow tpow=2 |'
        +fdmod.ccut3d('|',parmig)
        +'byte gainpanel=a pclip=99.0 |'
        +fdmod.cgrey3d('frame1=%d frame2=%d frame3=%d'%(izcip,ixcip,iycip)+par['labelrot0'],parmig))

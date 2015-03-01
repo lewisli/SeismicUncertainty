@@ -316,27 +316,27 @@ for isx in range(par['mignsx']):
 
 # ------------------------------------------------------------
 klist=len(nlist);
-#for k in range(klist):
-    #ktag = '-%06d' % nlist[k]
+for k in range(klist):
+    ktag = '-%06d' % nlist[k]
 
     # shot position
-    #fdmod.point('ss'+ktag,xlist[k],ylist[k],par)
-    #Plot('ss'+ktag,graphyx('plotfat=10 symbol=. plotcol=6',par))
+    fdmod.point('ss'+ktag,xlist[k],ylist[k],par)
+    Plot('ss'+ktag,graphyx('plotfat=10 symbol=. plotcol=6',par))
 
     # receiver positions
-    #fdmod.boxarray('rr'+ktag,
-    #           par['nry'],ylist[k]-(par['nry']-1)/2*par['dry'],par['dry'],
-    #           par['nrx'],xlist[k]-(par['nrx']-1)/2*par['drx'],par['drx'],par)
-    #Plot('rr'+ktag,'put n2=%(nry)d n3=%(nrx)d | window j2=30 j3=5 |'%par+
-    #     graphyx('plotfat=2 symbol=. plotcol=2',par))
+    fdmod.boxarray('rr'+ktag,
+               par['nry'],ylist[k]-(par['nry']-1)/2*par['dry'],par['dry'],
+               par['nrx'],xlist[k]-(par['nrx']-1)/2*par['drx'],par['drx'],par)
+    Plot('rr'+ktag,'put n2=%(nry)d n3=%(nrx)d | window j2=30 j3=5 |'%par+
+         graphyx('plotfat=2 symbol=. plotcol=2',par))
 
-    #fdmod.boxarray('mm'+ktag,
-    #               par['nmy'],ylist[k]-par['hmy']*par['dry']*par['jy'],par['dry']*par['jy'],
-    #               par['nmx'],xlist[k]-par['hmx']*par['drx']*par['jx'],par['drx']*par['jx'],par)
-    #Plot('mm'+ktag,'window j2=71 |'+
-    #     graphyx('plotfat=2 symbol=. plotcol=1',par))
+    fdmod.boxarray('mm'+ktag,
+                   par['nmy'],ylist[k]-par['hmy']*par['dry']*par['jy'],par['dry']*par['jy'],
+                   par['nmx'],xlist[k]-par['hmx']*par['drx']*par['jx'],par['drx']*par['jx'],par)
+    Plot('mm'+ktag,'window j2=71 |'+
+         graphyx('plotfat=2 symbol=. plotcol=1',par))
 
-#Plot('ss',['ss-%06d'%nlist[k] for k in range(klist)],'Overlay')
+Plot('ss',['ss-%06d'%nlist[k] for k in range(klist)],'Overlay')
 
 # ------------------------------------------------------------
 par['xcip']=20.00
@@ -350,41 +350,41 @@ izcip=(par['zcip']-parmig['oz'])/(parmig['dz'])
 
 # ------------------------------------------------------------
 # velocity""")
-        lines.append("""velo="/data/groups/scrf/data/Seismic/Velocity/SEAM/3D/""" + self.velocitymodel + '"')
+        lines.append("""velo="/data/groups/scrf/data/Seismic/Velocity/""" + self.velocitymodel + '"')
         lines.append("""
 Flow('velo',None,
      'window j1=2 j2=2 j3=%d <%s'%(par['jz'],velo))
 
-Result('velo','transp plane=23 memsize=16000| transp plane=12 memsize=16000|'
+Result('velo','transp plane=23 | transp plane=12 |'
        +fdmod.ccut3d('|',parmig)
        +'byte gainpanel=a pclip=99.9 allpos=y bias=1.5 |'
        +fdmod.cgrey3d('frame1=%d frame2=%d frame3=%d color=E'%(izcip,ixcip,iycip)+par['labelrot0'],parmig))
 
 Plot('vslice','velo',
-     'window n3=1 f3=%d | transp memsize=16000|'%izcip+
+     'window n3=1 f3=%d | transp |'%izcip+
      'reverse which=1 | put o1=%g d1=-%g |'%(par['ymax'],2*par['dy']) +
      greyyx('mean=y',par))
-#Result('vpall',['vslice','ss2793','ss0725','ss0357','ss'],'Overlay')
-#Result('vpwin',['vslice',                  'ss0357','ss'],'Overlay')
-#for k in range(klist):
-#    ktag = '-%06d' % nlist[k]
-#    Result('vpmig'+ktag,['vslice','rr'+ktag,'ss0357','ss'+ktag],'Overlay')
+Result('vpall',['vslice','ss2793','ss0725','ss0357','ss'],'Overlay')
+Result('vpwin',['vslice',                  'ss0357','ss'],'Overlay')
+for k in range(klist):
+    ktag = '-%06d' % nlist[k]
+    Result('vpmig'+ktag,['vslice','rr'+ktag,'ss0357','ss'+ktag],'Overlay')
 
 # ------------------------------------------------------------
 # velocity slice
 Result('vcut','velo',
-        'window n2=1 min2=%(ycip)g | transp memsize=16000|'%par
+        'window n2=1 min2=%(ycip)g | transp |'%par
         + fdmod.cgrey('pclip=100 color=E allpos=y bias=1.5'+section,par))
 
 # ------------------------------------------------------------
 # slowness
 Flow('slow','velo','window n3=%(nzmig)d | math output="1/input"'%par)
 Result('scut','slow',
-        'window n2=1 min2=%(ycip)g | transp memsize=16000|'%par
+        'window n2=1 min2=%(ycip)g | transp |'%par
         + fdmod.cgrey('pclip=99.9 color=j allpos=y bias=0.2'+section,par))
 
 Flow('sxy','slow','window n3=1')
-Flow('syx','sxy','transp memsize=16000')
+Flow('syx','sxy','transp')
 
 # datuming slowness (0.015km up to the surface; v=1.49km/s)
 Flow('slod',None,
@@ -472,7 +472,7 @@ class Job2(SConstructGenerator):
                  ' n3=' + str(self.par['nrx']) + ' o3=' + str(self.par['orx']) + ' d3=' + str(self.par['drx']) + ' label3=' + str(self.par['lrx']) 
                  + ' unit3=' + str(self.par['urx']) + '|' +
                  ' window n1=' + str(self.par['nt']) + ' j2=' + str(self.par['jy']) + ' j3=' + str(self.par['jx']) + ' | '  
-                 ' transp plane=23 memsize=16000|' +
+                 ' transp plane=23 |' +
                  ' window f1=250 | pad beg1=250 |' +
                  ' bandpass flo=3 fhi=15")')
 
@@ -480,7 +480,7 @@ class Job2(SConstructGenerator):
 
         # Get reciever data in frequency
         lines.append('Flow("rfrq' + ktagstr +'","data'+ ktagstr + '","fft1 inv=n opt=n | window squeeze=n n1=' + str(self.par['nw']) + 
-                ' min1=1 j1=2 | transp plane=12 memsize=16000| transp plane=23 memsize=16000| put label1=x label2=y label3=w label4=e o2=' + str(self.par['ory']) + 
+                ' min1=1 j1=2 | transp plane=12 | transp plane=23 | put label1=x label2=y label3=w label4=e o2=' + str(self.par['ory']) + 
                 ' d2=' + str(self.par['dry']) + ' unit1=km label1=x unit2=km label2=y")')
 
         # Tape data in space
@@ -556,13 +556,13 @@ class Job4(SConstructGenerator):
         lines.append('Flow("cic' + ktagstr + '",' + text + """,'''add scale=1,1 ${SOURCES[1:-1]}''')"""  )
         lines.append('Flow("cwn' + ktagstr + '",["cic' + ktagstr + '", "sxy", "syx"],' +
         """ ''' remap1 pattern=${SOURCES[1]} order=1 |
-        transp memsize=16000|
+        transp |
         remap1 pattern=${SOURCES[2]} order=1 |
-        transp memsize=16000
+        transp
         ''')"""  )
 
         lines.append('Result("ccut' + ktagstr + '",' + '"cwn' + ktagstr + '",' + 
-        """ '''window n2=1 min2=15.5 | transp memsize=16000|   
+        """ '''window n2=1 min2=15.5 | transp |   
         grey
         title=""
         pclip=100 gainpanel=a
@@ -696,25 +696,23 @@ def main(argv=None):
 
     # Name of Job
     par['jobname'] = VelocityModelName
-
-    # 160 steps into 5 = 32 steps per node (8 threads per node = 4 iterations)
-    par['cigsplit'] = 5
+    par['cigsplit'] = 4
     par['TestNum'] = 64
 
     # Prepare velocity model
-    Job1(par,1,0.75,VelocityModelName)
+    Job1(par,1,0.5,VelocityModelName)
 
     # Prepare data
-    Job2(par,8,1.25)
+    Job2(par,8,2)
 
     # Run Migrations
     Job3(par,8,2)
 
     # Add split migration
-    Job4(par,1,0.75)
+    Job4(par,1,0.5)
 
     # Stack and plot
-    Job5(par,1,0.75)
+    Job5(par,1,0.5)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

@@ -316,27 +316,27 @@ for isx in range(par['mignsx']):
 
 # ------------------------------------------------------------
 klist=len(nlist);
-#for k in range(klist):
-    #ktag = '-%06d' % nlist[k]
+for k in range(klist):
+    ktag = '-%06d' % nlist[k]
 
     # shot position
-    #fdmod.point('ss'+ktag,xlist[k],ylist[k],par)
-    #Plot('ss'+ktag,graphyx('plotfat=10 symbol=. plotcol=6',par))
+    fdmod.point('ss'+ktag,xlist[k],ylist[k],par)
+    Plot('ss'+ktag,graphyx('plotfat=10 symbol=. plotcol=6',par))
 
     # receiver positions
-    #fdmod.boxarray('rr'+ktag,
-    #           par['nry'],ylist[k]-(par['nry']-1)/2*par['dry'],par['dry'],
-    #           par['nrx'],xlist[k]-(par['nrx']-1)/2*par['drx'],par['drx'],par)
-    #Plot('rr'+ktag,'put n2=%(nry)d n3=%(nrx)d | window j2=30 j3=5 |'%par+
-    #     graphyx('plotfat=2 symbol=. plotcol=2',par))
+    fdmod.boxarray('rr'+ktag,
+               par['nry'],ylist[k]-(par['nry']-1)/2*par['dry'],par['dry'],
+               par['nrx'],xlist[k]-(par['nrx']-1)/2*par['drx'],par['drx'],par)
+    Plot('rr'+ktag,'put n2=%(nry)d n3=%(nrx)d | window j2=30 j3=5 |'%par+
+         graphyx('plotfat=2 symbol=. plotcol=2',par))
 
-    #fdmod.boxarray('mm'+ktag,
-    #               par['nmy'],ylist[k]-par['hmy']*par['dry']*par['jy'],par['dry']*par['jy'],
-    #               par['nmx'],xlist[k]-par['hmx']*par['drx']*par['jx'],par['drx']*par['jx'],par)
-    #Plot('mm'+ktag,'window j2=71 |'+
-    #     graphyx('plotfat=2 symbol=. plotcol=1',par))
+    fdmod.boxarray('mm'+ktag,
+                   par['nmy'],ylist[k]-par['hmy']*par['dry']*par['jy'],par['dry']*par['jy'],
+                   par['nmx'],xlist[k]-par['hmx']*par['drx']*par['jx'],par['drx']*par['jx'],par)
+    Plot('mm'+ktag,'window j2=71 |'+
+         graphyx('plotfat=2 symbol=. plotcol=1',par))
 
-#Plot('ss',['ss-%06d'%nlist[k] for k in range(klist)],'Overlay')
+Plot('ss',['ss-%06d'%nlist[k] for k in range(klist)],'Overlay')
 
 # ------------------------------------------------------------
 par['xcip']=20.00
@@ -350,7 +350,7 @@ izcip=(par['zcip']-parmig['oz'])/(parmig['dz'])
 
 # ------------------------------------------------------------
 # velocity""")
-        lines.append("""velo="/data/groups/scrf/data/Seismic/Velocity/SEAM/3D/""" + self.velocitymodel + '"')
+        lines.append("""velo="/data/groups/scrf/data/Seismic/Velocity/""" + self.velocitymodel + '"')
         lines.append("""
 Flow('velo',None,
      'window j1=2 j2=2 j3=%d <%s'%(par['jz'],velo))
@@ -364,11 +364,11 @@ Plot('vslice','velo',
      'window n3=1 f3=%d | transp memsize=16000|'%izcip+
      'reverse which=1 | put o1=%g d1=-%g |'%(par['ymax'],2*par['dy']) +
      greyyx('mean=y',par))
-#Result('vpall',['vslice','ss2793','ss0725','ss0357','ss'],'Overlay')
-#Result('vpwin',['vslice',                  'ss0357','ss'],'Overlay')
-#for k in range(klist):
-#    ktag = '-%06d' % nlist[k]
-#    Result('vpmig'+ktag,['vslice','rr'+ktag,'ss0357','ss'+ktag],'Overlay')
+Result('vpall',['vslice','ss2793','ss0725','ss0357','ss'],'Overlay')
+Result('vpwin',['vslice',                  'ss0357','ss'],'Overlay')
+for k in range(klist):
+    ktag = '-%06d' % nlist[k]
+    Result('vpmig'+ktag,['vslice','rr'+ktag,'ss0357','ss'+ktag],'Overlay')
 
 # ------------------------------------------------------------
 # velocity slice
@@ -556,13 +556,13 @@ class Job4(SConstructGenerator):
         lines.append('Flow("cic' + ktagstr + '",' + text + """,'''add scale=1,1 ${SOURCES[1:-1]}''')"""  )
         lines.append('Flow("cwn' + ktagstr + '",["cic' + ktagstr + '", "sxy", "syx"],' +
         """ ''' remap1 pattern=${SOURCES[1]} order=1 |
-        transp memsize=16000|
+        transp |
         remap1 pattern=${SOURCES[2]} order=1 |
-        transp memsize=16000
+        transp
         ''')"""  )
 
         lines.append('Result("ccut' + ktagstr + '",' + '"cwn' + ktagstr + '",' + 
-        """ '''window n2=1 min2=15.5 | transp memsize=16000|   
+        """ '''window n2=1 min2=15.5 | transp |   
         grey
         title=""
         pclip=100 gainpanel=a
@@ -696,25 +696,23 @@ def main(argv=None):
 
     # Name of Job
     par['jobname'] = VelocityModelName
-
-    # 160 steps into 5 = 32 steps per node (8 threads per node = 4 iterations)
-    par['cigsplit'] = 5
-    par['TestNum'] = 64
+    par['cigsplit'] = 4
+    par['TestNum'] = 2
 
     # Prepare velocity model
-    Job1(par,1,0.75,VelocityModelName)
+    Job1(par,1,0.5,VelocityModelName)
 
     # Prepare data
-    Job2(par,8,1.25)
+    Job2(par,8,0.5)
 
     # Run Migrations
     Job3(par,8,2)
 
     # Add split migration
-    Job4(par,1,0.75)
+    Job4(par,1,0.5)
 
     # Stack and plot
-    Job5(par,1,0.75)
+    Job5(par,1,0.5)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
