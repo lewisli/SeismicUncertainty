@@ -1,0 +1,20 @@
+#!/bin/bash
+# Checks if each submitted job has finished...
+while read pp; do
+  while :
+  do
+  	# Get currently running jobs with my name
+  	RunningJobs=`qstat | grep lewisli | awk '{print $1}'`
+  	# Strip the .stanford.edu
+	p=`echo $pp | sed 's/\.stanford.edu$//'`
+	if [[ $RunningJobs == *$p* ]]
+	then
+		clock=`date +"%T"`
+		echo "$clock: Waiting for job: $p to finish...";
+		sleep 30
+	else
+		echo $p "is finished" 
+		break
+	fi
+  done
+done < $1

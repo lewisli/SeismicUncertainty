@@ -1,0 +1,30 @@
+#!/bin/bash
+# Checks output logs for errors 
+
+# Check specific folder
+echo "Checking $1 for failed jobs..."
+
+# List of Jobs with errors
+ErrorJobList=$1/ErrorList.txt
+SecondID=$1/SecondAttemptIDs.txt
+
+# Grep for error string and output job names to ErrorList
+grep -R "scons: building terminated because of errors." $1/* | awk '{print $1}' | cut -d : -f1 | sed 's/\.out$//' > $ErrorJobList
+
+# Print jobs names
+if [ -s $ErrorJobList ]; then
+    echo "Found Errors in the following jobs:"
+    cat $ErrorJobList
+    echo "Attempting to re-run..."
+    # Re-run each of the error jobs
+    for errJob in `cat $ErrorJobList`
+    do
+	JobPath=$errJob	
+	echo "Resubmitting $JobPath"
+	qsub ${JobPath} > $SecondID
+    done
+    # Wait for error jobs to finished...
+    WaitForJobs $SecondID
+else
+    echo "Looks good!"
+fi

@@ -4,21 +4,23 @@
 SplitScons PerlinTest.hh
 
 # Run Job 1
-ParallelSubmit.sh pbs/Part1List pbs/Part1JobIDs
-WaitForJobs.sh pbs/Part1JobIDs
+ParallelSubmit pbs/Part1List pbs/Part1JobIDs pbs/Part1JobLog
+WaitForJobs pbs/Part1JobIDs
+CheckJobs pbs/Part1
 
 # Run Job 2
-NewSubmit.sh pbs/Part2List pbs/Part2JobIDs
-WaitForJobs.sh pbs/Part2JobIDs
+#ParallelSubmit pbs/Part2List pbs/Part2JobIDs pbs/Part2JobLog
+#WaitForJobs pbs/Part2JobIDs
+#CheckJobs pbs/Part2
 
 # Run Job 3
-NewSubmit.sh pbs/Part3List pbs/Part3JobIDs
-WaitForJobs.sh pbs/Part3JobIDs
+#ParallelSubmit pbs/Part3List pbs/Part3JobIDs
+#WaitForJobs pbs/Part3JobIDs
 
 # Run Job 4
-NewSubmit.sh pbs/Part4List pbs/Part4JobIDs
-WaitForJobs.sh pbs/Part4JobIDs
+#NewSubmit.sh pbs/Part4List pbs/Part4JobIDs
+#WaitForJobs.sh pbs/Part4JobIDs
 
 # Run Job 5
-NewSubmit.sh pbs/Part5List pbs/Part5JobIDs
-WaitForJobs.sh pbs/Part5JobIDs
+#NewSubmit.sh pbs/Part5List pbs/Part5JobIDs
+#WaitForJobs.sh pbs/Part5JobIDs
