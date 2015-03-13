@@ -530,9 +530,44 @@ class Job3(SConstructGenerator):
 
         self.SConstructText = string.join(lines,'\n')
 
+# Sums the results of the previous steps
 class Job4(SConstructGenerator):
-    def __init__(self,par,threads=1,walltime=0.5):
+    def __init__(self,par,threads=1,walltime=2):
         self.CategoryName = 'Part4'
+        SConstructGenerator.__init__(self,par,threads,walltime)
+        
+        for k in range(self.par['TestNum']):
+            ktag,ktagstr = self.GenerateTag(k)
+            self.SubJobName = self.par['jobname'] + '-' + self.CategoryName + str(ktag) + '-a'
+            self.GenerateText(k,'a')
+            self.WriteOutput(self.SubJobName)
+            self.SubJobName = self.par['jobname'] + '-' + self.CategoryName + str(ktag) + '-b'
+            self.GenerateText(k,'b')
+            self.WriteOutput(self.SubJobName)
+
+        self.joblistf.close()
+
+    def GenerateText(self,k,part):
+        ktag,ktagstr = self.GenerateTag(k)
+        cic_split_list = []
+
+        if (part=='a')
+        	cic_split_list.append("'cic" + ktagstr + '_' + str(0) + "'")
+        	cic_split_list.append("'cic" + ktagstr + '_' + str(1) + "'")
+		if (part=='b')
+        	cic_split_list.append("'cic" + ktagstr + '_' + str(2) + "'")
+        	cic_split_list.append("'cic" + ktagstr + '_' + str(3) + "'")
+
+        text = '[' + string.join(cic_split_list,',') + ']'
+
+        lines = self.GenerateSConstructHeader()
+        lines.append('Flow("cic' + ktagstr + part + '",' + text + """,'''add scale=1,1 ${SOURCES[1:-1]}''')"""  )
+        self.SConstructText = string.join(lines,'\n')
+
+
+class Job5(SConstructGenerator):
+    def __init__(self,par,threads=1,walltime=0.5):
+        self.CategoryName = 'Part5'
         SConstructGenerator.__init__(self,par,threads,walltime)
         
         for k in range(self.par['TestNum']):
@@ -547,8 +582,9 @@ class Job4(SConstructGenerator):
         ktag,ktagstr = self.GenerateTag(k)
         cic_split_list = []
 
-        for s in range(self.par['cigsplit']):
-            cic_split_list.append("'cic" + ktagstr + '_' + str(s) + "'")
+        cic_split_list.append("'cic" + ktagstr + '_' + str('a') + "'")
+        cic_split_list.append("'cic" + ktagstr + '_' + str('b') + "'")
+        cic_split_list.append("'cic" + ktagstr + '_' + str(4) + "'")
 
         text = '[' + string.join(cic_split_list,',') + ']'
 
@@ -574,9 +610,9 @@ class Job4(SConstructGenerator):
 
         self.SConstructText = string.join(lines,'\n')
 
-class Job5(SConstructGenerator):
+class Job6(SConstructGenerator):
     def __init__(self,par,threads,walltime):
-        self.CategoryName = 'Part5'
+        self.CategoryName = 'Part6'
         SConstructGenerator.__init__(self,par,threads,walltime)
         self.SubJobName = self.par['jobname'] + '-' + self.CategoryName
         self.GenerateText()
@@ -708,11 +744,14 @@ def main(argv=None):
     # Run Migrations
     Job3(par,8,2)
 
-    # Add split migration
-    Job4(par,1,0.5)
+    # Add split migration a)
+    Job4(par,1,2)
 
-    # Stack and plot
-    Job5(par,1,0.5)
+	# Add split migration b)
+    Job5(par,1,2)
+
+    # Stack
+    Job6(par,1,2)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
