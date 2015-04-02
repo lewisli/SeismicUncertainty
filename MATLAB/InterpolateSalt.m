@@ -20,7 +20,7 @@ ScaleFactor = InputSize./OutputSize;
 % I calibrated it to work for images of size [175 200], hence a scale
 % factor will need to be applied
 BaseHeatFilterSize = 30;
-HeatFilterSize = BaseHeatFilterSize*mean(OutputSize./[175 200 75]);
+HeatFilterSize = round(BaseHeatFilterSize*mean(OutputSize./[175 200 75]));
 h = waitbar(0,'Initializing waitbar...');
 
 Output = zeros(OutputSize);
@@ -44,26 +44,26 @@ for i = 1:OutputSize(3)
         
         FilledSlice = HeatEquationFill(FilledSlice,30,HeatFilterSize);
         
-        figure(2);
-        subplot(2,2,1);
-        imagesc(sampleA);
-        colorbar;
-        set(gca,'clim',[1490 4800]);
-        title(['Original Image. Slice: ' num2str(SeekLayer)]);
-        
-        subplot(2,2,2);
-        imagesc(FilledSlice);
-        colorbar;
-        set(gca,'clim',[1490 4800]);
-        title(['Filled Image. Slice: ' num2str(SeekLayer)]);
-        
-        subplot(2,2,3);
-        imagesc(SaltMask);
-        colorbar;
-        set(gca,'clim',[0 1]);
-        title(['Salt Mask. Slice: ' num2str(SeekLayer)]);
-        
-        pause(0.01);
+%         figure(2);
+%         subplot(2,2,1);
+%         imagesc(sampleA);
+%         colorbar;
+%         set(gca,'clim',[1490 4800]);
+%         title(['Original Image. Slice: ' num2str(SeekLayer)]);
+%         
+%         subplot(2,2,2);
+%         imagesc(FilledSlice);
+%         colorbar;
+%         set(gca,'clim',[1490 4800]);
+%         title(['Filled Image. Slice: ' num2str(SeekLayer)]);
+%         
+%         subplot(2,2,3);
+%         imagesc(SaltMask);
+%         colorbar;
+%         set(gca,'clim',[0 1]);
+%         title(['Salt Mask. Slice: ' num2str(SeekLayer)]);
+%         
+%         pause(0.01);
         Output(:,:,i) = FilledSlice;
     else
         Output(:,:,i) = imresize(sampleA,[OutputSize(1) OutputSize(2)],...

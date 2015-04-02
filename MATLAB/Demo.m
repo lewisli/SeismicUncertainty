@@ -5,8 +5,8 @@ DataPath = getenv('SYNCDATAPATH');
 %% Demo for downsampling Seismic Cube
 file_path = '/Volumes/Communal/Data/Seismic/Velocity/Truth/Vp_xyz_10m.bin';
 OriginalSize = [3501 4001 1501];
-OriginalSpacing = [1 1 1];
-newSize = [176,201,76];
+OriginalSpacing = [10 10 10];
+newSize = [350,400,150];
 close all;
 [Output, OutputSpacing] = DownsampleSeismicCube(file_path,OriginalSize,...
     OriginalSpacing, NewSize);
