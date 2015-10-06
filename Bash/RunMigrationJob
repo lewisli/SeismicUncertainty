@@ -1,0 +1,52 @@
+#!/bin/bash
+# RunMigrationJob: Run 1-way wave equation migration, deletes all intermediate
+# files, copies stacked image to OfficeComputer
+#
+# Inputs:
+# $1: Name of job name
+# $2: Name of Velocity model (without .hh extension), assumes is stored in
+# /data/groups/scrf/data/Seismic/Velocity/SEAM/3D
+# 
+#
+# Author: Lewis Li (lewisli@stanford.edu)
+# Original Date: Feburary 15th 2015
+# Last Modified: October 6th 2015
+
+if [ $# -ne 2 ]
+  then
+    echo "Usage: MigrationSaveAllResults JobName VelocityModelName"
+    exit 0
+fi
+
+echo "Creating SConstruct Files for Job Name: $1 using Velocity Model $2.hh"
+
+DefaultVelocityModelPath=/data/groups/scrf/data/Seismic/Velocity/SEAM/3D
+
+if [ ! -f DefaultVelocityModelPath/$2.hh ]; then
+    echo "No velocity model not found at : ${DefaultVelocityModelPath}/$2.hh"
+    exit 0
+fi
+
+mkdir $1
+cd $1
+SplitScons $2.hh
+
+# Migration is 6 seperate components. 
+NumPartsOfJob=6
+
+# Run jobs
+for i in `seq 1 $NumPartsOfJob`;
+do
+	echo "Running Part: $i"
+	ParallelSubmit pbs/Part${i}List pbs/Part${i}JobIDs pbs/Part${i}JobLog
+	WaitForJobs pbs/Part${i}JobIDs
+	CheckJobs pbs/Part${i}
+done
+
+# Remove intermediate jobs
+cd /data/groups/scrf/tmp/SeismicUncertainty/Migrations/$1
+ls -1 | grep -vx 'cstk.rsf@\|cwn-byt.rsf@' | xargs rm
+
+# Copy to OfficeComputer External HD
+ssh lewisli@171.64.168.65 "mkdir /run/media/lewisli/SeagateData/MigrationResults/$1"
+scp cwn-byt.rsf@ cstk.rsf@ lewisli@171.64.168.65:/run/media/lewisli/SeagateData/MigrationResults/$1

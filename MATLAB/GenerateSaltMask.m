@@ -1,7 +1,26 @@
 function [ SaltMask ] = GenerateSaltMask( CurrentDepthSlice, SaltVelocity,...
     CurrentDepth)
-%GenerateSaltMask Summary of this function goes here
-%   Detailed explanation goes here
+% GenerateSaltMask Produces a binary mask of where salt is located
+% Uses image segmentation to determine where salt is located in a given depth
+% slice
+%
+% Input parameters:
+%
+% CurrentDepthSlice: Matrix containing depth slice to be processed
+% SaltVelocity: Given salt velocity to determine
+% CurrentDepth: Depth in terms of cell sizes 
+%
+% Output Parameters:
+%
+% SaltMask: Binary mask of same dimensions of CurrentDepthSize indicating 
+% presence of salt.
+%
+% Lewis Li (lewisli@stanford.edu)
+% Date of Creation: Feburary 21st 2015
+% Last Updated: September 23rd 2015
+%
+% TODO: Parameterize the hard coded numbers, will be required to apply
+% to different field case.
 
 threshold_lower = SaltVelocity - 1;
 threshold_upper = SaltVelocity + 1;

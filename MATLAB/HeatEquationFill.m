@@ -2,12 +2,21 @@ function [ OutputImage ] = HeatEquationFill( InputImage, NumIterations, ...
     FilterSize)
 % HeatEquationFill Takes an image containing a salt body, (set to 0), and
 % interpolates the boundary back in.
-%   This assumes that original image has been pre-processed such that the
-%   salt locations has been specified as 0. This works by solving the
-%   linear heat equuation, by specifiying the intensity of the boundaries
-%   around the salt body and flowing them in. Takes quite a few iterations.
-%   Lewis Li (lewisli@stanford.edu)
-%   September 24th 2014
+%
+% This assumes that original image has been pre-processed such that the
+% salt locations has been specified as 0. This works by solving the
+% linear heat equuation, by specifiying the intensity of the boundaries
+% around the salt body and flowing them in. Takes quite a few iterations.
+%
+% Input Parameters: 
+%
+% InputImage: Velocity model with salt locations set to 0
+% NumIterations: Number of times to apply filter
+% FilterSize: Filter Dimensions
+%
+% Lewis Li (lewisli@stanford.edu)
+% Date of Creation: Feburary 24th 2014
+% Last Updated: September 23rd 2015
 
 if nargin < 3
     NumIterations = 60;

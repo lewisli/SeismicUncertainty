@@ -1,0 +1,29 @@
+#!/bin/bash
+# WaitForJobs: Ensures that previous serial jobs have finished before
+# submitting next set of parallel jobs
+#
+# Inputs:
+# $1: Path to file containing running JobIDs
+# 
+#
+# Author: Lewis Li (lewisli@stanford.edu)
+# Original Date: Feburary 15th 2015
+# Last Modified: October 6th 2015
+while read pp; do
+  while :
+  do
+  	# Get currently running jobs with my name
+  	RunningJobs=`qstat | grep lewisli | awk '{print $1}'`
+  	# Strip the .stanford.edu
+	p=`echo $pp | sed 's/\.stanford.edu$//'`
+	if [[ $RunningJobs == *$p* ]]
+	then
+		clock=`date +"%T"`
+		echo "$clock: Waiting for job: $p to finish...";
+		sleep 30
+	else
+		echo $p "is finished" 
+		break
+	fi
+  done
+done < $1
