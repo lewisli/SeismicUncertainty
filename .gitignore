@@ -5,6 +5,8 @@
 *.rsf
 pbs/
 Fig/
+Migration/
+Migration2015/
 HISTORY.txt
 .DS_Store
 *~
