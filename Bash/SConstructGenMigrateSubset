@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # Generates SConstruct files for 1 way migration using SEAM model.
 #
 #
@@ -214,62 +214,6 @@ section=' screenratio=0.375 screenht=5.0 min2=16 max2=32 max1=6'
 overlay=' screenratio=0.375 screenht=5.0 min1=16 max1=32 max2=6'
 
 # ------------------------------------------------------------
-def greyyx(custom,par):
-    return '''
-    grey title="" pclip=100 gainpanel=a
-    min1=%g max1=%g label1="\F2 %s\F3" unit1=%s
-    min2=%g max2=%g label2="\F2 %s\F3" unit2=%s
-    screenratio=%f screenht=10
-    %s
-    '''% (
-    par['ymax'],par['ymin'],par['ly'],par['uy'],
-    par['xmin'],par['xmax'],par['lx'],par['ux'],
-    1.0*par['ny']/par['nx'],
-    par['labelattr']+' '+par['labelrot']+' '+custom)
-
-def graphyx(custom,par):
-    return '''
-    dd type=complex |
-    graph title="" labelrot=n wantaxis=y yreverse=n
-    min2=%g max2=%g label2="\F2 %s\F3" unit2=%s
-    min1=%g max1=%g label1="\F2 %s\F3" unit1=%s
-    screenratio=%g screenht=10
-    %s
-    ''' % (
-    par['ymin'],par['ymax'],par['ly'],par['uy'],
-    par['xmin'],par['xmax'],par['lx'],par['ux'],
-    1.0*par['ny']/par['nx'],
-    par['labelattr']+' '+par['labelrot']+' '+custom)
-
-def greyzx(x,custom,par):
-    return '''
-    grey title="" pclip=100 gainpanel=a
-    min1=%g max1=%g label1="\F2 %s\F3" unit1=%s
-    min2=%g max2=%g label2="\F2 %s\F3" unit2=%s
-    screenratio=%g screenht=10
-    %s
-    ''' % (
-    par['zmin'],par['zmax'],par['lz'],par['uz'],
-    x-par['hmx']*par['drx']/2,
-    x+par['hmx']*par['drx']/2,par['lx'],par['ux'],
-    1.0*(par['nz']*par['dz'])/(par['nmx']*par['drx']/2),
-    par['labelattr']+' '+par['labelrot']+' '+custom)
-
-def graphzx(custom,par):
-    return '''
-    dd type=complex |
-    graph title="" labelrot=n wantaxis=n yreverse=y
-    min1=%g max1=%g label1="\F2 %s\F3" unit1=%s
-    min2=%g max2=%g label2="\F2 %s\F3" unit2=%s
-    screenratio=%g screenht=10
-    %s
-    ''' % (
-    par['zmin'],par['zmax'],par['lz'],par['uz'],
-    par['xmin'],par['xmax'],par['lx'],par['ux'],
-    1.0*(par['nmx']*par['drx']/2)/(par['nz']*par['dz']),
-    par['labelattr']+' '+par['labelrot']+' '+custom)
-
-# ------------------------------------------------------------
 # 2793 shots
 fdmod.boxarray('ss2793',
                57,par['osy'],par['dsy'],
@@ -289,15 +233,16 @@ fdmod.boxarray('ss0357',
 Plot('ss0357',graphyx('plotfat=5 symbol=. plotcol=5',par))
 
 # ------------------------------------------------------------
-# index on the small grid (i.e. the grid of 357 sources)
-par['mignsx']=8
-par['migosx']=4
-par['migdsx']=1
+# index on the small grid (i.e. the grid of 357 sources)""")
+        lines.append("par['mignsx']=" + str(self.par['mignsx']))
+        lines.append("par['migosx']=" + str(self.par['migosx']))
+        lines.append("par['migdsx']=" + str(self.par['migdsx']))
 
-par['mignsy']=8
-par['migosy']=7
-par['migdsy']=1
+        lines.append("par['mignsy']=" + str(self.par['mignsy']))
+        lines.append("par['migosy']=" + str(self.par['migosy']))
+        lines.append("par['migdsy']=" + str(self.par['migdsy']))
 
+        lines.append("""
 par['nmig']=par['mignsx']*par['mignsy']
 
 xshot=range(par['migosx'],par['migosx']+par['mignsx']*par['migdsx'],par['migdsx'])
@@ -333,17 +278,10 @@ for k in range(klist):
     fdmod.boxarray('rr'+ktag,
                par['nry'],ylist[k]-(par['nry']-1)/2*par['dry'],par['dry'],
                par['nrx'],xlist[k]-(par['nrx']-1)/2*par['drx'],par['drx'],par)
-    Plot('rr'+ktag,'put n2=%(nry)d n3=%(nrx)d | window j2=30 j3=5 |'%par+
-         graphyx('plotfat=2 symbol=. plotcol=2',par))
 
     fdmod.boxarray('mm'+ktag,
                    par['nmy'],ylist[k]-par['hmy']*par['dry']*par['jy'],par['dry']*par['jy'],
                    par['nmx'],xlist[k]-par['hmx']*par['drx']*par['jx'],par['drx']*par['jx'],par)
-    Plot('mm'+ktag,'window j2=71 |'+
-         graphyx('plotfat=2 symbol=. plotcol=1',par))
-
-Plot('ss',['ss-%06d'%nlist[k] for k in range(klist)],'Overlay')
-
 # ------------------------------------------------------------
 par['xcip']=20.00
 par['ycip']=15.50
@@ -366,10 +304,6 @@ Result('velo','transp plane=23 | transp plane=12 |'
        +'byte gainpanel=a pclip=99.9 allpos=y bias=1.5 |'
        +fdmod.cgrey3d('frame1=%d frame2=%d frame3=%d color=E'%(izcip,ixcip,iycip)+par['labelrot0'],parmig))
 
-Plot('vslice','velo',
-     'window n3=1 f3=%d | transp |'%izcip+
-     'reverse which=1 | put o1=%g d1=-%g |'%(par['ymax'],2*par['dy']) +
-     greyyx('mean=y',par))
 Result('vpall',['vslice','ss2793','ss0725','ss0357','ss'],'Overlay')
 Result('vpwin',['vslice',                  'ss0357','ss'],'Overlay')
 for k in range(klist):
@@ -457,7 +391,7 @@ class Job2(SConstructGenerator):
         self.CategoryName = 'Part2'
         SConstructGenerator.__init__(self,par,threads,walltime)
 
-        for k in range(self.par['TestNum']):
+        for k in range(self.par['NumShotToMig']):
             ktag,ktagstr = self.GenerateTag(k)
             self.SubJobName = self.par['jobname'] + '-' + self.CategoryName + str(ktag)
             
@@ -515,7 +449,7 @@ class Job3(SConstructGenerator):
         self.CategoryName = 'Part3'
         SConstructGenerator.__init__(self,par,threads,walltime)
 
-        for k in range(self.par['TestNum']):
+        for k in range(self.par['NumShotToMig']):
             ktag,ktagstr = self.GenerateTag(k)
             for s in range(self.par['cigsplit']):
                 self.SubJobName = self.par['jobname'] + '-' + self.CategoryName + str(ktag) + '-' + str(s)
@@ -542,7 +476,7 @@ class Job4(SConstructGenerator):
         self.CategoryName = 'Part4'
         SConstructGenerator.__init__(self,par,threads,walltime)
         
-        for k in range(self.par['TestNum']):
+        for k in range(self.par['NumShotToMig']):
             ktag,ktagstr = self.GenerateTag(k)
             self.SubJobName = self.par['jobname'] + '-' + self.CategoryName + str(ktag) + '-a'
             self.GenerateText(k,0)
@@ -578,7 +512,7 @@ class Job5(SConstructGenerator):
         self.CategoryName = 'Part5'
         SConstructGenerator.__init__(self,par,threads,walltime)
         
-        for k in range(self.par['TestNum']):
+        for k in range(self.par['NumShotToMig']):
             ktag,ktagstr = self.GenerateTag(k)
             self.SubJobName = self.par['jobname'] + '-' + self.CategoryName + str(ktag)
             self.GenerateText(k)
@@ -630,7 +564,7 @@ class Job6(SConstructGenerator):
 
     def GenerateText(self):
         cstk_list = []
-        for k in range(self.par['TestNum']):
+        for k in range(self.par['NumShotToMig']):
             ktag,ktagstr = self.GenerateTag(k)
             cstk_list.append("'cwn" + ktagstr + "'")
 
@@ -671,7 +605,7 @@ class Job6(SConstructGenerator):
         lines.append('Flow("cwn-byt",' + text + """,''' cat axis=4 space=n ${SOURCES[1:64]} |
         byte gainpanel=a pclip=99.0''') """)
 
-        for k in range(self.par['TestNum']):
+        for k in range(self.par['NumShotToMig']):
             ktag = '-%06d' % self.nlist[k]
             ktagstr = str(ktag)
             kstr = str(k)
@@ -692,12 +626,10 @@ class Job6(SConstructGenerator):
 
         self.SConstructText = string.join(lines,'\n')
         
-
-
 def main(argv=None):
     
     if len(sys.argv) < 2:
-        print 'Usage: SplitSCons VelocityModel'
+        print 'Usage: MigrateShotSubset VelocityModel'
         sys.exit(0)
     else:
         VelocityModelName = sys.argv[1]
@@ -725,12 +657,39 @@ def main(argv=None):
     par['hmy']=((par['nry']-1)/2/par['jy']+par['nypad'])
     par['nmx']=par['hmx']*2
     par['nmy']=par['hmy']*2
-    par['mignsx']=8
-    par['migosx']=4
-    par['migdsx']=1
-    par['mignsy']=8
-    par['migosy']=7
-    par['migdsy']=1
+
+
+    # Position of shots
+    par['mignsx']=2 # Number of shots along X axis
+    par['migosx']=7 # Start index of shots along X axis (default = 4)
+    par['migdsx']=1 # Spacing of shots along X axis
+
+    par['mignsy']=2 # Number of shots along Y axis
+    par['migosy']=10 # Start index of shots along Y axis (default = 7)
+    par['migdsy']=1 # Spacing of shots along Y axis
+
+    par['nmig']=par['mignsx']*par['mignsy']
+
+    xshot=range(par['migosx'],par['migosx']+par['mignsx']*par['migdsx'],par['migdsx'])
+    yshot=range(par['migosy'],par['migosy']+par['mignsy']*par['migdsy'],par['migdsy'])
+
+    nlist=[];
+    xlist=[];
+    ylist=[];
+    for isx in range(par['mignsx']):
+        for isy in range(par['mignsy']):
+            xline = 9+2*(xshot[isx]-1)
+            yline = 9+2*(yshot[isy]-1)
+
+            N=1+20+4*(yline-1)+(20+4*(xline-1))*267
+            nlist.append(N);
+
+            x=par['osx']+(xline-1)*par['dsx']
+            y=par['osy']+(yline-1)*par['dsy']
+
+            xlist.append(x);
+            ylist.append(y);
+
     par['nw']=160
     par['ow']=1
     par['jw']=2
@@ -744,8 +703,17 @@ def main(argv=None):
 
     # Name of Job
     par['jobname'] = VelocityModelName
+
+    # Number of ways we will split the cube for parallel processing
     par['cigsplit'] = 5
-    par['TestNum'] = 64
+
+    # Total Number of shots
+    par['NumShotToMig'] = par['mignsx']*par['mignsy'];
+
+    print ['Running migration on ' + VelocityModelName + ' with ' + str(par['NumShotToMig']) + ' shots']
+    print ['Shot IDs:']
+    for i in range(par['NumShotToMig']):
+        print nlist[i]
 
     # Prepare velocity model
     # Input: (Parameters, cores requested, time requested) 
@@ -762,9 +730,6 @@ def main(argv=None):
 
     # Add split migration b)
     Job5(par,1,2)
-
-    # Stack
-    Job6(par,8,2)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
