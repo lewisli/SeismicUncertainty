@@ -22,7 +22,7 @@ echo "Creating SConstruct Files for Job Name: $1 using Velocity Model $2.hh"
 
 DefaultVelocityModelPath=/data/groups/scrf/data/Seismic/Velocity/SEAM/3D
 
-if [ ! -f DefaultVelocityModelPath/$2.hh ]; then
+if [ ! -f $DefaultVelocityModelPath/$2.hh ]; then
     echo "No velocity model not found at : ${DefaultVelocityModelPath}/$2.hh"
     exit 0
 fi
