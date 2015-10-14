@@ -31,7 +31,7 @@ mkdir $1
 cd $1
 SConstructGenMigrateSubset $2.hh
 
-# Migration is 6 seperate components. 
+# Migration is 5 seperate components. We are not doing a stack.
 NumPartsOfJob=5
 
 # Run jobs
@@ -44,5 +44,6 @@ do
 done
 
 # Copy to OfficeComputer External HD
-#ssh lewisli@171.64.168.65 "mkdir /run/media/lewisli/SeagateData/MigrationResults/$1"
-#scp cwn-byt.rsf@ cstk.rsf@ lewisli@171.64.168.65:/run/media/lewisli/SeagateData/MigrationResults/$1
+cd /data/groups/scrf/tmp/SeismicUncertainty/Migrations2015/$1
+ssh lewisli@171.64.168.65 "mkdir /run/media/lewisli/Scratch/MigrationResults/RSF/$1"
+scp cwn* lewisli@171.64.168.65:/run/media/lewisli/Scratch/MigrationResults/RSF/$1
