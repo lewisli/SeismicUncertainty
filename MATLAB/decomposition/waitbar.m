@@ -155,7 +155,12 @@ function updatewaitbar(h,progress,message)
     % 2.2 - Calculate the estimated time remaining
         sec_remain = elap*(1/progress-1);
         e_mes = datestr(elap/86400,'HH:MM:SS');
-        r_mes = datestr(sec_remain/86400,'HH:MM:SS');
+        
+        if (isfinite(sec_remain))
+            r_mes = datestr(sec_remain/86400,'HH:MM:SS');
+        else
+            r_mes = datestr(0,'HH:MM:SS');
+        end
 
     % 2.3 - Produce error if progress is > 1
         if progress > 1; r_mes = 'Error, progress > 1'; end
