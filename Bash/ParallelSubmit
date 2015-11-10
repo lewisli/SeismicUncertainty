@@ -21,7 +21,7 @@ fi
 
 #######################  User Inputs #########################
  ## maximum fraction of cluster your jobs occupy
-my_max_frac=.35
+my_max_frac=.20
 
 ## maximum fraction of cluster total occupied
 total_max_frac=.95
@@ -30,7 +30,7 @@ total_max_frac=.95
 my_max_que=20
 
 ## number of jobs in que (keep constant)
-total_que=944
+total_que=1604
 
 ## file to read jobs to submit from
 list_file=$1

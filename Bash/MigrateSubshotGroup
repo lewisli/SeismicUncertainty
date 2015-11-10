@@ -1,0 +1,38 @@
+ #!/bin/bash
+
+ GroupName=Trial4
+ RealizationNameBase=Realization
+ NumJobs=49
+ MaxRunningJobs=4
+
+ for i in `seq 2 $NumJobs`;
+ do
+    RealizationName=$RealizationNameBase$i
+
+    # Check how many jobs we are running.. make sure we don't grep the grep command itself
+    RunningJobs=$( ps -u lewisli | grep MigrateShotSubs | awk '!/grep/' | wc -l)
+
+    echo "Looking to Submit: $RealizationName. Found $RunningJobs RunningJobs"
+
+    while [ $RunningJobs -gt $MaxRunningJobs ]
+    do
+    	RunningJobs=$( ps -u lewisli | grep MigrateShotSubs | awk '!/grep/' | wc -l)
+    	echo "Found $RunningJobs Running Jobs... Waiting for previous runs to finish..."
+    	sleep 500s
+    done
+
+    # Check if results directory exists, if not create one...
+    if [ ! -d "$GroupName" ]; then
+	echo "Making Results directory: " $GroupName
+	mkdir $GroupName
+    fi
+
+    LogName=$GroupName/$RealizationName.log
+    echo "Submitting Job. Log is in $LogName"
+
+    MigrateShotSubset $GroupName-Real-$i $GroupName $RealizationName > $LogName &
+    
+    # Sleep 
+    sleep 5s
+    
+ done    

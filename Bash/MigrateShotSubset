@@ -10,26 +10,36 @@
 #
 # Author: Lewis Li (lewisli@stanford.edu)
 # Original Date: Feburary 15th 2015
-# Last Modified: October 6th 2015
+# Last Modified: October 21st 2015
 
-if [ $# -ne 2 ]
+if [ $# -ne 3 ]
   then
-    echo "Usage: MigrateShotSubset JobName VelocityModelName"
+    echo "Usage: MigrateShotSubset JobName VelocityGroupName VelocityModelName"
     exit 0
 fi
 
-echo "Creating SConstruct Files for Job Name: $1 using Velocity Model $2.hh"
+echo "Creating SConstruct Files for Job Name: $1. GroupName: $2. Velocity Model $3.hh"
+
+if [ ! -d "$2" ]; then
+    echo "Making Results Directory: " $2
+    mkdir $2
+fi
+
+cd $2
 
 DefaultVelocityModelPath=/data/groups/scrf/data/Seismic/Velocity/SEAM/3D
 
-if [ ! -f $DefaultVelocityModelPath/$2.hh ]; then
-    echo "No velocity model not found at : ${DefaultVelocityModelPath}/$2.hh"
+if [ ! -f $DefaultVelocityModelPath/$2/$3.hh ]; then
+    echo "No velocity model not found at : ${DefaultVelocityModelPath}/$2/$3.hh"
     exit 0
 fi
 
-mkdir $1
+if [ ! -d "$1" ]; then
+   echo "Making Directory for Job: $1"
+   mkdir $1
+fi
 cd $1
-SConstructGenMigrateSubset $2.hh
+SConstructGenMigrateSubset $2 $3.hh
 
 # Migration is 5 seperate components. We are not doing a stack.
 NumPartsOfJob=5
@@ -44,6 +54,16 @@ do
 done
 
 # Copy to OfficeComputer External HD
-cd /data/groups/scrf/tmp/SeismicUncertainty/Migrations2015/$1
-ssh lewisli@171.64.168.65 "mkdir /run/media/lewisli/Scratch/MigrationResults/RSF/$1"
-scp cwn* lewisli@171.64.168.65:/run/media/lewisli/Scratch/MigrationResults/RSF/$1
+cd /data/groups/scrf/tmp/Migrations2015/$2/$1
+
+# Check if we have all results
+if [ `ls -l | grep cwn | wc -l` = "4" ]; then
+	ssh lewisli@171.64.168.65 "mkdir /media/Scratch2/Data/MigrationResults/RSF/$2";
+        ssh lewisli@171.64.168.65 "mkdir /media/Scratch2/Data/MigrationResults/RSF/$2/$1";
+	rsync -rP cwn* lewisli@171.64.168.65:/media/Scratch2/Data/MigrationResults/RSF/$2/$1;
+	rm -rf *
+else
+	echo "$1" >> /home/lewisli/SeismicUncertainty/Migrations2015/$2/FailedRuns.txt;
+fi
+
+echo "Done..."
