@@ -29,18 +29,21 @@ elseif (Precision == 8)
     DataType = 'double';
 end
 
+
 slice_size = InputSize(1)*InputSize(2)*Precision;
 ScaleFactor = InputSize./OutputSize;
-h = waitbar(0,'Initializing waitbar...');
+%h = waitbar(0,'Initializing waitbar...');
 
 Output = zeros(OutputSize);
 for i = 1:OutputSize(3)
-    waitbar(i/OutputSize(3),h,sprintf('%2d%%',round(i/OutputSize(3)*100)));
+    %waitbar(i/OutputSize(3),h,sprintf('%2d%%',round(i/OutputSize(3)*100)));
     SeekLayer = i*ScaleFactor(3)-1;
+    
     Lower = floor(SeekLayer);
     Upper = ceil(SeekLayer);
+
+
     fseek(fid,slice_size*Lower,'bof');
-    
     sampleA = fread(fid, [InputSize(1) InputSize(2)],DataType);
     sampleA = imresize(sampleA,[OutputSize(1) OutputSize(2)]);
     
@@ -48,14 +51,17 @@ for i = 1:OutputSize(3)
     sampleB = fread(fid, [InputSize(1) InputSize(2)],DataType);
     sampleB = imresize(sampleB,[OutputSize(1) OutputSize(2)]);
     
+    
+    
     if (Lower ~=Upper)
         Output(:,:,i) = (1-(SeekLayer-Lower))*sampleA+...
             (1-(Upper-SeekLayer))*sampleB;
     else
         Output(:,:,i) = sampleA;
     end
+ 
 end
-close(h);
+%close(h);
 
 % Compute new spacing
 OutputSpacing = InputSpacing.*ScaleFactor;

@@ -1,7 +1,7 @@
 
 % High resolution basecase
 clear all;
-DataDir = '/run/media/lewisli/Scratch/VelocityModels/Sumo/Surfaces/';
+DataDir = '/media/Scratch/VelocityModels/Sumo/Surfaces/';
 
 %% Case 1 (High)
 NumPoints1 = 3129227;

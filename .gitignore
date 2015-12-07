@@ -16,6 +16,7 @@ HISTORY.txt
 *.txt
 *.swp
 *.mat
+*.dat
 
 MATLAB/data
 

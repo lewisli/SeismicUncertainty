@@ -57,6 +57,9 @@ if (TrialMetaData.Remap)
     end
     Deformations = Deformations(RemapMatrix,:);
     PointLocations = PointLocations(RemapMatrix,:,:);
+else
+    Deformations = Deformations(TrialMetaData.StartIndex:end,:);
+    PointLocations = PointLocations(TrialMetaData.StartIndex:end,:,:);
 end
 
 end

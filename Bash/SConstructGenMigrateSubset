@@ -290,7 +290,7 @@ izcip=(par['zcip']-parmig['oz'])/(parmig['dz'])
 
 # ------------------------------------------------------------
 # velocity""")
-        lines.append("""velo="/data/groups/scrf/data/Seismic/Velocity/SEAM/3D/""" + self.velocitymodel + '"')
+        lines.append("""velo="/""" + self.velocitymodel + '"')
         lines.append("""
 Flow('velo',None,
      'window j1=2 j2=2 j3=%d <%s'%(par['jz'],velo))
@@ -624,13 +624,13 @@ class Job6(SConstructGenerator):
 def main(argv=None):
     
     if len(sys.argv) < 3:
-        print 'Usage: MigrateShotSubset GroupName VelocityModel'
+        print 'Usage: SConstructGenMigrateSubset JobName VelocityModelPath'
         sys.exit(0)
     else:
-	GroupName = sys.argv[1]
-        VelocityModelName = sys.argv[2]
-	print GroupName
-        print VelocityModelName
+	   JobName = sys.argv[1]
+       VelocityModelPath = sys.argv[2]
+	   print JobName
+       print VelocityModelPath
     
     par = dict( nt=2000,   ot=0, dt=0.008, lt='t',   ut='s',
                 nx=1167,   ox=0, dx=0.03,  lx='x',   ux='km',
@@ -699,7 +699,7 @@ def main(argv=None):
 
 
     # Name of Job
-    par['jobname'] = VelocityModelName
+    par['jobname'] = JobName
 
     # Number of ways we will split the cube for parallel processing
     par['cigsplit'] = 5
@@ -707,14 +707,14 @@ def main(argv=None):
     # Total Number of shots
     par['NumShotToMig'] = par['mignsx']*par['mignsy'];
 
-    print ['Running migration on ' + VelocityModelName + ' with ' + str(par['NumShotToMig']) + ' shots']
+    print ['Running migration on ' + JobName + ' with ' + str(par['NumShotToMig']) + ' shots']
     print ['Shot IDs:']
     for i in range(par['NumShotToMig']):
         print nlist[i]
 
     # Prepare velocity model
-    # Input: (Parameters, cores requested, time requested) 
-    Job1(par,8,0.5,''.join([GroupName+'/'+VelocityModelName]))
+    # Input: (Parameters, cores requested, time requested, VelocityModelPath) 
+    Job1(par,8,0.5,VelocityModelPath))
 
     # Prepare data
     Job2(par,8,2)

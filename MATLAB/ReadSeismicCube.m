@@ -27,18 +27,18 @@ elseif (num_bytes_in_single == 8)
 end
 
 slice_size = InputSize(1)*InputSize(2)*num_bytes_in_single;
-h = waitbar(0,'Initializing waitbar...');
+%h = waitbar(0,'Initializing waitbar...');
 
 Output = zeros(InputSize);
 for i = 1:InputSize(3)
-    waitbar(i/InputSize(3),h,sprintf('%2d%%',round(i/InputSize(3)*100)));
+    %waitbar(i/InputSize(3),h,sprintf('%2d%%',round(i/InputSize(3)*100)));
     SeekLayer = i-1;
     fseek(fid,slice_size*SeekLayer,'bof');    
     sampleA = fread(fid, [InputSize(1) InputSize(2)],DataType);
     Output(:,:,i) = sampleA;
 end
-close(h);
-close all;
+%close(h);
+%close all;
 end
 
 

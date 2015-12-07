@@ -1,0 +1,53 @@
+#!/bin/bash
+# MetropolisInnerLoop: Runs inner loop of Metropolis sampler for velocity 
+# modeling. For a given "Trial Number"  and Iteration, run the 1-way wave 
+# equation on all realizations
+#
+# Inputs:
+# $1: Trial Name (ex: Trial1)
+# $2: Iteration Name (ex: Iter_1)
+# $3: Number of realizations
+#
+# Assumes velocity models are stored in:
+# /data/groups/scrf/data/Seismic/Velocity/SEAM/3D/TrialName/IterationName/
+# 
+#
+# Author: Lewis Li (lewisli@stanford.edu)
+# Original Date: December 7th 2015
+
+if [ $# -ne 3 ]
+  then
+    echo "Usage: MetropolisInnerLoop TrialName IterationName NumRealizations"
+    exit 0
+fi
+
+TrialName=$1
+IterationName=$2
+NumRealizations=`expr $3 - 1`
+
+ActiveDir=/data/groups/scrf/users/lewisli/SeismicUncertainty/MetropolisMigrations
+VelocityModelDir=/data/groups/scrf/data/Seismic/Velocity/SEAM/3D/$TrialName/$IterationName
+
+cd $ActiveDir
+
+for i in `seq 0 $NumRealizations`;
+do
+	JobName=$1_$2_$i
+	VelocityModelName=$2_$i.hh
+
+	VelocityModelPath=$VelocityModelDir/$VelocityModelName
+
+	echo "Creating SConstruct Files for: $JobName. Velocity Model $VelocityModelPath"
+
+	if [ ! -f $VelocityModelPath ]; then
+    	echo "No velocity model not found at : $VelocityModelPath "
+    	exit 0
+	fi
+
+	MigrationDir=$ActiveDir/$TrialName/$IterationName/$IterationName"_"$i
+	#mkdir -p $MigrationDir
+
+	cd $MigrationDir
+	SConstructGenMigrateSubset $JobName VelocityModelPath
+
+done

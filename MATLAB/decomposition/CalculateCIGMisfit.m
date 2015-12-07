@@ -12,6 +12,7 @@ CrossLineRange = ROI(2,:);
 DepthRange = ROI(3,:);
 
 ShotCombinations = [1 2; 1 3; 1 4; 2 3; 2 4; 3 4];
+%ShotCombinations = [1 2];
 
 % Read shots and upscale
 for s = 1:length(ShotNames)
@@ -31,6 +32,8 @@ for s = 1:length(ShotNames)
     [CurrentShots(:,:,:,s), ResultSpacing] = ...
         UpscaleSeismicCube(ShotFileName, ResultSize, ...
         InputSpacing,OutputSize,4);
+
+   
     
 end
 
@@ -45,7 +48,12 @@ for j = 1:size(ShotCombinations,1)
         CrossLineRange(1):CrossLineRange(2),DepthRange(1):DepthRange(2),...
         ShotsOfInterest(2))));
     
+    
+    
     MeanSSD = mean(MeanSSD(:));
+    
+    display(['Difference between ' num2str(ShotsOfInterest) ' is ' num2str(MeanSSD)])
+    
     GlobalMeanSSE = GlobalMeanSSE + MeanSSD;
 end
 
